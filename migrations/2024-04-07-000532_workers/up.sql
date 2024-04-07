@@ -1,0 +1,10 @@
+CREATE TABLE "workers" (
+	"Id"	INTEGER,
+	"Name"	TEXT NOT NULL,
+	"Surname"	TEXT NOT NULL,
+	"IdContent"	INTEGER NOT NULL,
+	"Role"	INTEGER NOT NULL,
+	FOREIGN KEY("Role") REFERENCES "role"("Id") ON DELETE CASCADE,
+	PRIMARY KEY("Id"),
+	FOREIGN KEY("IdContent") REFERENCES "content"("Id") ON DELETE CASCADE
+)
