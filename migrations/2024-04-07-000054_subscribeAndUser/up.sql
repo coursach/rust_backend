@@ -1,9 +1,0 @@
-CREATE TABLE "subscribeAndUser" (
-	"Id"	INTEGER,
-	"IdSubscribe"	INTEGER NOT NULL,
-	"IdUsers"	INTEGER NOT NULL,
-	"DataEnd"	TEXT NOT NULL,
-	FOREIGN KEY("IdSubscribe") REFERENCES "subscribe"("Id") ON DELETE CASCADE,
-	FOREIGN KEY("IdUsers") REFERENCES "users"("Id") ON DELETE CASCADE,
-	PRIMARY KEY("Id")
-)
