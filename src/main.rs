@@ -1,51 +1,23 @@
-use sqlite::Error as sqERR;
-use crate::models::*;
 
 //#[macro_use] extern crate rocket;              // like document
+pub mod function;
 pub mod models;
 
-#[derive(Debug)]
-pub enum UserErr{
-    DbErr(sqERR),
-}
-
-impl From<sqERR> for UserErr {
-    fn from(s:sqERR)->Self{
-        UserErr::DbErr(s)
-    }
-}
-
-impl Users {
-    pub fn add(&self, name:&str, surname:&str, password:&str, email:&str, role:i32) -> Result<(), UserErr>{
-        let connection = sqlite::open(&self.fname)?;
-        let mut db = connection.prepare("INSERT INTO users ('Name', 'Surname', 'Password', 'Email', 'Role') VALUES (?, ?, ?, ?, ?);")?;
-        db.bind::<&[(_, &str)]>(&[
-            (1, name),
-            (2, surname),
-            (3, password),
-            (4, email),
-            (5, &(role.to_string()))
-        ][..])?;
-        db.next()?;
-        Ok(())
-    }
-}
-
 fn main(){
-    let connections = String::from("./database/cinemadb.db");
-
-
-    let db = Users{
-        fname: connections,
+    let db = models::Users{
+        name: "".to_string(),
+        surname: "".to_string(),
+        password: "".to_string(),
+        role: 0,
+        email: "".to_string(),
     };
-
-    match  db.add("name", "surname", "password", "email", 123) {
-        Ok(_) => {
-            println!("Success add new user");
-        }
-        Err(UserErr::DbErr(ref err)) => {
-            println!("{:?}", err);
-        }
+    match  db.all() {
+        Ok(res) => {
+            for user in res{
+                println!("{} {} {} {} {}", user.name, user.surname, user.email, user.role, user.password)
+            }
+        },
+        Err(_) => todo!(),
     }
 }
 
