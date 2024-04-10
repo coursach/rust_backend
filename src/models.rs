@@ -157,7 +157,7 @@ pub struct Workers {
 
 impl Users {
     pub fn add(&self) -> Result<(), err::UserErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO users ('Name', 'Surname', 'Password', 'Email', 'Role') VALUES (?, ?, ?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
@@ -170,7 +170,7 @@ impl Users {
         Ok(())
     }
     pub fn all(&self) -> Result<Vec<Users>, err::UserErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:Vec<Users> = Vec::new();
         let mut db = connection.prepare("SELECT * FROM users;")?;
         while let State::Row = db.next()? {
@@ -189,7 +189,7 @@ impl Users {
 
 impl Workers {
     pub fn add(&self) -> Result<(), err::WorkersErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO workers ('Name', 'Surname', 'IdContent', 'Role') VALUES (?, ?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
@@ -204,7 +204,7 @@ impl Workers {
 
 impl Subscribe{
     pub fn add(&self) -> Result<(), err::SubscribeErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO subscribe ('Name', 'Count_mouth', 'Title', 'Description','Discount') VALUES (?, ?, ?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
@@ -220,7 +220,7 @@ impl Subscribe{
 
 impl SubscribeAndUser{
     pub fn link(&self)-> Result<(), err::SubscribeAndUserErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO subscribe_and_user ('IdSubscribe', 'IdUsers', 'DataEnd') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_subscribe.to_string().as_str()),
@@ -234,7 +234,7 @@ impl SubscribeAndUser{
 
 impl Role{
     pub fn link(&self)-> Result<(), err::RoleErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO role ('Name') VALUES (?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
@@ -246,7 +246,7 @@ impl Role{
 
 impl History{
     pub fn add(&self)-> Result<(), err::HistoryErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO history ('IdUser', 'IdContent', 'EndSee') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_user.to_string().as_str()),
@@ -260,7 +260,7 @@ impl History{
 
 impl File {
     pub fn add(&self)-> Result<(), err::FileErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO file ('IdContent', 'Path') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_content.to_string().as_str()),
@@ -273,7 +273,7 @@ impl File {
 
 impl ContentForPreferences {
     pub fn add(&self)-> Result<(), err::ContentForPreferencesErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO content_for_preferences ('IdContent', 'IdUsers') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_content.to_string().as_str()),
@@ -286,7 +286,7 @@ impl ContentForPreferences {
 
 impl Content {
     pub fn add(&self)-> Result<(), err::ContentErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO content ('Name', 'Description', 'DescriptionDetails') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
@@ -300,7 +300,7 @@ impl Content {
 
 impl Codepromo {
     pub fn add(&self)-> Result<(), err::CodepromoErr>{
-        let connection = sqlite::open("./database/cinemadb.db")?;
+        let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO codepromo ('IdSubscribe', 'Description') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_subscribe.to_string().as_str()),
