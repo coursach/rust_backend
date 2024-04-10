@@ -1,6 +1,6 @@
 /target
 
-cinemadb
+/database/cinemadb.db
 
 # Added by cargo
 #
