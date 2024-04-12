@@ -1,9 +1,10 @@
 /target
 
-/data
 
 # Added by cargo
 #
 # already existing elements were commented out
 
 #/target
+rustc-ice-2024-04-12T12_37_30-3497.txt
+data/cinemadb.db

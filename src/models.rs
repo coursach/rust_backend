@@ -169,7 +169,7 @@ impl Users {
         db.next()?;
         Ok(())
     }
-    pub fn all(&self) -> Result<Vec<Users>, err::UserErr>{
+    pub fn all() -> Result<Vec<Users>, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:Vec<Users> = Vec::new();
         let mut db = connection.prepare("SELECT * FROM users;")?;

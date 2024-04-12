@@ -4,20 +4,20 @@ pub mod function;
 pub mod models;
 
 fn main(){
-    let db = models::Users{
+    /*let db = models::Users{
         name: "".to_string(),
         surname: "".to_string(),
         password: "".to_string(),
         role: 0,
         email: "".to_string(),
-    };
-    match  db.all() {
+    };*/
+    match  models::Users::all() {
         Ok(res) => {
             for user in res{
                 println!("{} {} {} {} {}", user.name, user.surname, user.email, user.role, user.password)
             }
         },
-        Err(_) => todo!(),
+        Err(_) =>{println!("error")},
     }
 }
 
