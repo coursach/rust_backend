@@ -144,12 +144,7 @@ pub struct SubscribeAndUser {
     pub data_end : String,
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
-pub struct User<'r>{
-    pub name: &'r str,
-    pub role: i32,
-}
+
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct Users{
@@ -181,6 +176,7 @@ impl Users {
     fn empty_user() ->Users{
         Users { name: "".to_string(), surname: "".to_string(), password: "".to_string(), email: "".to_string(), image: "".to_string(), role: 0 }
     }
+
     pub fn add(&self) -> Result<String, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         match Users::check_user_exsist(&self.email) {
@@ -202,7 +198,6 @@ impl Users {
             },
             Err(e) => return Err(e),
         }
-        
         Ok("Успешно".to_string())
     }
 
@@ -245,7 +240,7 @@ impl Users {
         Ok(res)
     }
 
-    fn check_user_exsist(email:&str)->Result<i32, err::UserErr>{
+    pub fn check_user_exsist(email:&str)->Result<i32, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:i32 = 0;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ?;")?;
