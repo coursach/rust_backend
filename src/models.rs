@@ -1,3 +1,5 @@
+
+use serde::{Deserialize, Serialize};
 use sqlite::State;
 
 pub mod err{
@@ -125,7 +127,10 @@ pub struct Role {
     pub name : String,
 }
 
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
 pub struct Subscribe {
+    pub id: i32,
     pub name : String,
     pub count_month :i32,
     pub title : String,
@@ -139,11 +144,20 @@ pub struct SubscribeAndUser {
     pub data_end : String,
 }
 
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct User<'r>{
+    pub name: &'r str,
+    pub role: i32,
+}
+#[derive(Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
 pub struct Users{
     pub name: String,
     pub surname: String,
     pub password: String,
     pub email: String,
+    pub image: String,
     pub role: i32,
 }
 
@@ -154,21 +168,44 @@ pub struct Workers {
     pub role :i32,
 }
 
+/* 
+struct AllResponse;
+
+impl AllResponse{
+    pub fn update(name_table:String, pole:String) -> String{
+        format!("UPDATE {name_table} SET {pole} = ? WHERE ?")
+    }
+}*/
 
 impl Users {
-    pub fn add(&self) -> Result<(), err::UserErr>{
-        let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO users ('Name', 'Surname', 'Password', 'Email', 'Role') VALUES (?, ?, ?, ?, ?);")?;
-        db.bind::<&[(_, &str)]>(&[
-            (1, self.name.as_str()),
-            (2, self.surname.as_str()),
-            (3, self.password.as_str()),
-            (4, self.email.as_str()),
-            (5, &(self.role.to_string()))
-        ][..])?;
-        db.next()?;
-        Ok(())
+    fn empty_user() ->Users{
+        Users { name: "".to_string(), surname: "".to_string(), password: "".to_string(), email: "".to_string(), image: "".to_string(), role: 0 }
     }
+    pub fn add(&self) -> Result<String, err::UserErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        match Users::check_user_exsist(&self.email) {
+            Ok(i) => {
+                if i == 0{
+                    let mut db = connection.prepare("INSERT INTO users ('Name', 'Surname', 'Password', 'Email', 'Role', 'ImageProfileFile') VALUES (?, ?, ?, ?, ?, ?);")?;
+                    db.bind::<&[(_, &str)]>(&[
+                        (1, self.name.as_str()),
+                        (2, self.surname.as_str()),
+                        (3, self.password.as_str()),
+                        (4, self.email.as_str()),
+                        (5, &(self.role.to_string())),
+                        (6, self.image.as_str())
+                    ][..])?;
+                    db.next()?;
+                }else{
+                    return Ok("Такой пользователь уже есть".to_string());
+                }
+            },
+            Err(e) => return Err(e),
+        }
+        
+        Ok("Успешно".to_string())
+    }
+
     pub fn all() -> Result<Vec<Users>, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:Vec<Users> = Vec::new();
@@ -180,10 +217,90 @@ impl Users {
                 password: db.read(3)?,
                 email: db.read(4)?,
                 role: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+                image: db.read(6)?,
             } ;
             res.push(ret);
         }
         Ok(res)
+    }
+
+    pub fn find_id(id:usize) -> Result<Users, err::UserErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res:Users = Users::empty_user();
+        let mut db = connection.prepare("SELECT * FROM users where Id = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        while let State::Row = db.next()? {
+            let ret:Users = Users{
+                name: db.read(1)?,
+                surname: db.read(2)?,
+                password: db.read(3)?,
+                email: db.read(4)?,
+                role: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+                image: db.read(6)?,
+            } ;
+            res = ret;
+        }
+        Ok(res)
+    }
+
+    fn check_user_exsist(email:&str)->Result<i32, err::UserErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res:i32 = 0;
+        let mut db = connection.prepare("SELECT Id FROM users where Email = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, email),
+        ][..])?;
+        while let State::Row = db.next()? {
+           res = db.read::<String, _>(0).unwrap().parse::<i32>().unwrap();
+        }
+        Ok(res)
+    }
+
+    pub fn update(&self, id:i32) -> Result<(), err::UserErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        if self.name != "" {
+            let mut db = connection.prepare("UPDATE users SET Name = ? WHERE ?;")?;
+            db.bind::<&[(_, &str)]>(&[
+                (1, self.name.as_str()),
+                (2, id.to_string().as_str())
+            ][..])?;
+            db.next()?;
+        }
+        if self.surname != "" {
+            let mut db = connection.prepare("UPDATE users SET Surname = ? WHERE ?;")?;
+            db.bind::<&[(_, &str)]>(&[
+                (1, self.surname.as_str()),
+                (2, id.to_string().as_str())
+            ][..])?;
+            db.next()?;
+        }
+        if self.password != "" {
+            let mut db = connection.prepare("UPDATE users SET Password = ? WHERE ?;")?;
+            db.bind::<&[(_, &str)]>(&[
+                (1, self.password.as_str()),
+                (2, id.to_string().as_str())
+            ][..])?;
+            db.next()?;
+        }
+        if self.email != "" {
+            let mut db = connection.prepare("UPDATE users SET Email = ? WHERE ?;")?;
+            db.bind::<&[(_, &str)]>(&[
+                (1, self.email.as_str()),
+                (2, id.to_string().as_str())
+            ][..])?;
+            db.next()?;
+        }
+        if self.role != 0 {
+            let mut db = connection.prepare("UPDATE users SET Role = ? WHERE ?;")?;
+            db.bind::<&[(_, &str)]>(&[
+                (1, self.role.to_string().as_str()),
+                (2, id.to_string().as_str())
+            ][..])?;
+            db.next()?;
+        }
+        Ok(())
     }
 }
 
@@ -215,6 +332,24 @@ impl Subscribe{
         ][..])?;
         db.next()?;
         Ok(())
+    }
+
+    pub fn all() -> Result<Vec<Subscribe>, err::SubscribeErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res:Vec<Subscribe> = Vec::new();
+        let mut db = connection.prepare("SELECT * FROM subscribe;")?;
+        while let State::Row = db.next()? {
+            let ret:Subscribe = Subscribe{
+                id: db.read::<String, _>(0).unwrap().parse::<i32>().unwrap(),
+                name: db.read(1)?,
+                count_month: db.read::<String, _>(2).unwrap().parse::<i32>().unwrap(),
+                title: db.read(3)?,
+                description: db.read(4)?,
+                discount: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+            } ;
+            res.push(ret);
+        }
+        Ok(res)
     }
 }
 
