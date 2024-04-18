@@ -1,10 +1,12 @@
 
 use models::*;
-#[macro_use] extern crate rocket;              // like document
+#[macro_use] extern crate rocket; 
+use rocket::http::Status;             
 pub mod function;
 pub mod models;
+mod claims;
+use claims::Claims;
 use serde_json::json;
-use serde::Deserialize;
 use rocket_contrib::json::Json;
 
 /* 
@@ -26,10 +28,7 @@ fn main(){
     }
 }
 */
-#[derive(Deserialize)]
-pub struct UserData{
-    pub email: String,
-}
+
 
 #[post("/check", format = "application/json", data = "<input>")]
 pub fn check(input: String) -> String{
@@ -50,7 +49,6 @@ pub fn check(input: String) -> String{
         })).to_string()
     },   
     }
-    
 }
 
 #[get("/subscribe", format = "application/json")]
@@ -64,14 +62,51 @@ pub fn get_all_subscribe() -> String{
     }
 }
 
+
 #[get("/")]
 fn index() -> &'static str {
     "hi"
 }
 
+#[post("/login", data="<login_string>")]
+fn login(login_string: String) -> String{
+    match serde_json::from_str::<LoginRequest>(&login_string) {
+        Ok(v)=>{
+            match Users::login(v.email.clone(), v.password.clone()) {
+                Ok(u) => {
+                    match u {
+                        true => {
+                            let claim = Claims::from_name(&v.email);
+                            let response = LoginResponse{
+                                token: match claim.into_token(){
+                                    Ok(s) => s,
+                                    Err(_) => todo!(),
+                                }
+                            };
+                            Json(json!(response)).to_string()
+                        },
+                        false => Json(json!({
+                            "status": Status::Unauthorized,
+                            "result": "нет"
+                        })).to_string(),
+                    }
+                },
+                Err(_) => Json(json!({
+                    "status": Status::Unauthorized,
+                    "result": "null"
+                })).to_string(),
+            }
+        }, 
+        Err(e)=>Json(json!({
+            "status": 200,
+            "result": e.to_string()
+        })).to_string(),
+    }
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, get_all_subscribe, check])
+    rocket::build().mount("/", routes![index, get_all_subscribe, check, login])
 }
 
 

@@ -156,11 +156,29 @@ pub struct Users{
     pub role: i32,
 }
 
+
 pub struct Workers {
     pub name : String,
     pub surname : String,
     pub id_content :i32,
     pub role :i32,
+}
+
+
+#[derive(Deserialize)]
+pub struct LoginRequest{
+    pub email: String,
+    pub password: String   
+}
+
+#[derive(Deserialize)]
+pub struct UserData{
+    pub email: String,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse{
+    pub token: String
 }
 
 /* 
@@ -173,8 +191,25 @@ impl AllResponse{
 }*/
 
 impl Users {
-    fn empty_user() ->Users{
+    fn empty_user() -> Users{
         Users { name: "".to_string(), surname: "".to_string(), password: "".to_string(), email: "".to_string(), image: "".to_string(), role: 0 }
+    }
+
+    pub fn login(email: String, password:String)-> Result<bool, err::UserErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res:usize= 0;
+        let mut db = connection.prepare("SELECT Id FROM users where Email = ? and Password = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, email.as_str()),
+            (2, password.as_str()),
+        ][..])?;
+        while let State::Row = db.next()? {
+           res = db.read::<String, _>(0).unwrap().parse::<usize>().unwrap();
+        }
+        match res != 0 {
+            true => Ok(true),
+            false => Ok(false),
+        }
     }
 
     pub fn add(&self) -> Result<String, err::UserErr>{
@@ -201,25 +236,7 @@ impl Users {
         Ok("Успешно".to_string())
     }
 
-    pub fn all() -> Result<Vec<Users>, err::UserErr>{
-        let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:Vec<Users> = Vec::new();
-        let mut db = connection.prepare("SELECT * FROM users;")?;
-        while let State::Row = db.next()? {
-            let ret:Users = Users{
-                name: db.read(1)?,
-                surname: db.read(2)?,
-                password: db.read(3)?,
-                email: db.read(4)?,
-                role: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
-                image: db.read(6)?,
-            } ;
-            res.push(ret);
-        }
-        Ok(res)
-    }
-
-    pub fn find_id(id:usize) -> Result<Users, err::UserErr>{
+    fn find_id(id:usize) -> Result<Users, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:Users = Users::empty_user();
         let mut db = connection.prepare("SELECT * FROM users where Id = ?;")?;
