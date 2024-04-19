@@ -173,14 +173,21 @@ pub struct LoginRequest{
 
 #[derive(Deserialize)]
 pub struct UserData{
-    pub email: String,
+    pub token: String,
+    pub name_field: String,
+    pub information: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginResponse{
     pub token: String
 }
 
+#[derive(Serialize)]
+pub struct PrivateResponse{
+    pub message: String,
+    pub user: String
+}
 /* 
 struct AllResponse;
 
@@ -191,11 +198,11 @@ impl AllResponse{
 }*/
 
 impl Users {
-    fn empty_user() -> Users{
+    pub fn empty_user() -> Users{
         Users { name: "".to_string(), surname: "".to_string(), password: "".to_string(), email: "".to_string(), image: "".to_string(), role: 0 }
     }
 
-    pub fn login(email: String, password:String)-> Result<bool, err::UserErr>{
+    pub fn login(email: String, password:String)-> Result<(bool, usize), err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:usize= 0;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ? and Password = ?;")?;
@@ -207,8 +214,8 @@ impl Users {
            res = db.read::<String, _>(0).unwrap().parse::<usize>().unwrap();
         }
         match res != 0 {
-            true => Ok(true),
-            false => Ok(false),
+            true => Ok((true, res)),
+            false => Ok((false, 0)),
         }
     }
 
@@ -236,7 +243,7 @@ impl Users {
         Ok("Успешно".to_string())
     }
 
-    fn find_id(id:usize) -> Result<Users, err::UserErr>{
+    pub fn find_id(id:usize) -> Result<Users, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:Users = Users::empty_user();
         let mut db = connection.prepare("SELECT * FROM users where Id = ?;")?;
@@ -257,7 +264,7 @@ impl Users {
         Ok(res)
     }
 
-    pub fn check_user_exsist(email:&str)->Result<i32, err::UserErr>{
+    fn check_user_exsist(email:&str)->Result<i32, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut res:i32 = 0;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ?;")?;
@@ -270,10 +277,10 @@ impl Users {
         Ok(res)
     }
 
-    pub fn update(&self, id:i32) -> Result<(), err::UserErr>{
+    pub fn update(&self, id:usize) -> Result<(), err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         if self.name != "" {
-            let mut db = connection.prepare("UPDATE users SET Name = ? WHERE ?;")?;
+            let mut db = connection.prepare("UPDATE users SET Name = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
                 (1, self.name.as_str()),
                 (2, id.to_string().as_str())
@@ -281,7 +288,7 @@ impl Users {
             db.next()?;
         }
         if self.surname != "" {
-            let mut db = connection.prepare("UPDATE users SET Surname = ? WHERE ?;")?;
+            let mut db = connection.prepare("UPDATE users SET Surname = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
                 (1, self.surname.as_str()),
                 (2, id.to_string().as_str())
@@ -289,7 +296,7 @@ impl Users {
             db.next()?;
         }
         if self.password != "" {
-            let mut db = connection.prepare("UPDATE users SET Password = ? WHERE ?;")?;
+            let mut db = connection.prepare("UPDATE users SET Password = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
                 (1, self.password.as_str()),
                 (2, id.to_string().as_str())
@@ -297,7 +304,7 @@ impl Users {
             db.next()?;
         }
         if self.email != "" {
-            let mut db = connection.prepare("UPDATE users SET Email = ? WHERE ?;")?;
+            let mut db = connection.prepare("UPDATE users SET Email = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
                 (1, self.email.as_str()),
                 (2, id.to_string().as_str())
@@ -305,7 +312,15 @@ impl Users {
             db.next()?;
         }
         if self.role != 0 {
-            let mut db = connection.prepare("UPDATE users SET Role = ? WHERE ?;")?;
+            let mut db = connection.prepare("UPDATE users SET Role = ? WHERE Id = ?;")?;
+            db.bind::<&[(_, &str)]>(&[
+                (1, self.role.to_string().as_str()),
+                (2, id.to_string().as_str())
+            ][..])?;
+            db.next()?;
+        }
+        if self.image != "" {
+            let mut db = connection.prepare("UPDATE users SET ImageProfileFile = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
                 (1, self.role.to_string().as_str()),
                 (2, id.to_string().as_str())

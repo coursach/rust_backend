@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 // TODO: this has an extra trailing space to cause the test to fail
 // This is to demonstrate shuttle will not deploy when a test fails.
 // FIX: remove the extra space character and try deploying again
-const BEARER: &str = "Bearer  ";
+const BEARER: &str = "Bearer ";
 const AUTHORIZATION: &str = "Authorization";
 
 /// Key used for symmetric token encoding
@@ -64,7 +64,7 @@ impl Claims {
     }
 
     /// Create a `Claims` from a 'Bearer <token>' value
-    fn from_authorization(value: &str) -> Result<Self, AuthenticationError> {
+    pub fn from_authorization(value: &str) -> Result<Self, AuthenticationError> {
         let token = value.strip_prefix(BEARER).map(str::trim);
 
         if token.is_none() {
