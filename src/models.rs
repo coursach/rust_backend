@@ -2,6 +2,8 @@
 use serde::{Deserialize, Serialize};
 use sqlite::State;
 
+use crate::ReturnedSubscribe;
+
 pub mod err{
     use sqlite::Error as sqERR;
     #[derive(Debug)]
@@ -128,9 +130,7 @@ pub struct Role {
 }
 
 #[derive(Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
 pub struct Subscribe {
-    pub id: i32,
     pub name : String,
     pub count_month :i32,
     pub title : String,
@@ -139,14 +139,11 @@ pub struct Subscribe {
 }
 
 pub struct SubscribeAndUser {
-    pub id_subscribe :i32,
-    pub id_users :i32,
+    pub id_subscribe :usize,
+    pub id_users :usize,
     pub data_end : String,
 }
 
-
-#[derive(Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
 pub struct Users{
     pub name: String,
     pub surname: String,
@@ -156,46 +153,12 @@ pub struct Users{
     pub role: i32,
 }
 
-
 pub struct Workers {
     pub name : String,
     pub surname : String,
     pub id_content :i32,
     pub role :i32,
 }
-
-
-#[derive(Deserialize)]
-pub struct LoginRequest{
-    pub email: String,
-    pub password: String   
-}
-
-#[derive(Deserialize)]
-pub struct UserData{
-    pub token: String,
-    pub name_field: String,
-    pub information: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct LoginResponse{
-    pub token: String
-}
-
-#[derive(Serialize)]
-pub struct PrivateResponse{
-    pub message: String,
-    pub user: String
-}
-/* 
-struct AllResponse;
-
-impl AllResponse{
-    pub fn update(name_table:String, pole:String) -> String{
-        format!("UPDATE {name_table} SET {pole} = ? WHERE ?")
-    }
-}*/
 
 impl Users {
     pub fn empty_user() -> Users{
@@ -204,15 +167,13 @@ impl Users {
 
     pub fn login(email: String, password:String)-> Result<(bool, usize), err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:usize= 0;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ? and Password = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, email.as_str()),
             (2, password.as_str()),
         ][..])?;
-        while let State::Row = db.next()? {
-           res = db.read::<String, _>(0).unwrap().parse::<usize>().unwrap();
-        }
+        db.next()?;
+        let res = db.read::<String, _>(0).unwrap().parse::<usize>().unwrap();
         match res != 0 {
             true => Ok((true, res)),
             false => Ok((false, 0)),
@@ -279,6 +240,7 @@ impl Users {
 
     pub fn update(&self, id:usize) -> Result<(), err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut changed = false;
         if self.name != "" {
             let mut db = connection.prepare("UPDATE users SET Name = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
@@ -286,6 +248,7 @@ impl Users {
                 (2, id.to_string().as_str())
             ][..])?;
             db.next()?;
+            changed = true;
         }
         if self.surname != "" {
             let mut db = connection.prepare("UPDATE users SET Surname = ? WHERE Id = ?;")?;
@@ -294,6 +257,7 @@ impl Users {
                 (2, id.to_string().as_str())
             ][..])?;
             db.next()?;
+            changed = true;
         }
         if self.password != "" {
             let mut db = connection.prepare("UPDATE users SET Password = ? WHERE Id = ?;")?;
@@ -302,6 +266,7 @@ impl Users {
                 (2, id.to_string().as_str())
             ][..])?;
             db.next()?;
+            changed = true;
         }
         if self.email != "" {
             let mut db = connection.prepare("UPDATE users SET Email = ? WHERE Id = ?;")?;
@@ -310,6 +275,7 @@ impl Users {
                 (2, id.to_string().as_str())
             ][..])?;
             db.next()?;
+            changed = true;
         }
         if self.role != 0 {
             let mut db = connection.prepare("UPDATE users SET Role = ? WHERE Id = ?;")?;
@@ -318,16 +284,22 @@ impl Users {
                 (2, id.to_string().as_str())
             ][..])?;
             db.next()?;
+            changed = true;
         }
         if self.image != "" {
             let mut db = connection.prepare("UPDATE users SET ImageProfileFile = ? WHERE Id = ?;")?;
             db.bind::<&[(_, &str)]>(&[
-                (1, self.role.to_string().as_str()),
-                (2, id.to_string().as_str())
+                (1, self.image.to_string().as_str()),
+                (2, id.to_string().as_str()),
             ][..])?;
             db.next()?;
+            changed = true;
         }
-        Ok(())
+        if changed {
+            return Ok(());
+        }else{
+            return Err(err::UserErr::DbErr(sqlite::Error{code: Some(300), message: rocket::serde::__private::Option::Some("".to_string()) }));
+        }
     }
 }
 
@@ -361,13 +333,13 @@ impl Subscribe{
         Ok(())
     }
 
-    pub fn all() -> Result<Vec<Subscribe>, err::SubscribeErr>{
+    pub fn all() -> Result<Vec<ReturnedSubscribe>, err::SubscribeErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:Vec<Subscribe> = Vec::new();
+        let mut res:Vec<ReturnedSubscribe> = Vec::new();
         let mut db = connection.prepare("SELECT * FROM subscribe;")?;
         while let State::Row = db.next()? {
-            let ret:Subscribe = Subscribe{
-                id: db.read::<String, _>(0).unwrap().parse::<i32>().unwrap(),
+            let ret = ReturnedSubscribe{
+                id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
                 name: db.read(1)?,
                 count_month: db.read::<String, _>(2).unwrap().parse::<i32>().unwrap(),
                 title: db.read(3)?,
@@ -378,19 +350,68 @@ impl Subscribe{
         }
         Ok(res)
     }
+
+    pub fn count_month(id: usize) ->Result<usize, err::SubscribeErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res:usize = 0;
+        let mut db = connection.prepare("SELECT Count_month FROM subscribe where Id = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        while let State::Row = db.next()? {
+            res = db.read::<String, _>(0).unwrap().parse::<usize>().unwrap();
+        }
+        Ok(res)
+    }
+
 }
 
 impl SubscribeAndUser{
     pub fn link(&self)-> Result<(), err::SubscribeAndUserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO subscribe_and_user ('IdSubscribe', 'IdUsers', 'DataEnd') VALUES (?, ?, ?);")?;
+        match SubscribeAndUser::check_exist_link(self.id_users){
+            Ok(b) => {
+                if b {
+                    let mut db = connection.prepare("UPDATE subscribe_and_user SET IdSubscribe = ?, DataEnd = ? WHERE IdUsers = ?;")?;
+                    db.bind::<&[(_, &str)]>(&[
+                        (1, self.id_subscribe.to_string().as_str()),
+                        (2, self.data_end.to_string().as_str()),
+                        (3, self.id_users.to_string().as_str()),
+                    ][..])?;
+                    db.next()?;
+                }else{
+                    let mut db = connection.prepare("INSERT INTO subscribe_and_user ('IdSubscribe', 'IdUsers', 'DataEnd') VALUES (?, ?, ?);")?;
+                    db.bind::<&[(_, &str)]>(&[
+                        (1, self.id_subscribe.to_string().as_str()),
+                        (2, self.id_users.to_string().as_str()),
+                        (3, self.data_end.as_str()),
+                    ][..])?;
+                    db.next()?;
+                }
+                Ok(())
+            },
+            Err(_) => todo!(),
+        }
+        
+    }
+
+    fn check_exist_link(id_user:usize) ->Result<bool, err::SubscribeAndUserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT Id FROM subscribe_and_user WHERE IdUsers = ?;")?;
         db.bind::<&[(_, &str)]>(&[
-            (1, self.id_subscribe.to_string().as_str()),
-            (2, self.id_users.to_string().as_str()),
-            (3, self.data_end.as_str()),
+            (1, id_user.to_string().as_str()),
         ][..])?;
         db.next()?;
-        Ok(())
+        let result = match db.read::<i64, _>(0){
+            Ok(u) => u as usize,
+            Err(_) => 0 as usize, 
+        };
+        if result == 0{
+            Ok(false)
+        }
+        else{
+            Ok(true)
+        }
     }
 }
 
