@@ -180,11 +180,11 @@ impl Users {
         }
     }
 
-    pub fn add(&self) -> Result<String, err::UserErr>{
+    pub fn add(&self) -> Result<(), err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         match Users::check_user_exsist(&self.email) {
-            Ok(i) => {
-                if i == 0{
+            Ok(b) => {
+                if !b {
                     let mut db = connection.prepare("INSERT INTO users ('Name', 'Surname', 'Password', 'Email', 'Role', 'ImageProfileFile') VALUES (?, ?, ?, ?, ?, ?);")?;
                     db.bind::<&[(_, &str)]>(&[
                         (1, self.name.as_str()),
@@ -195,47 +195,46 @@ impl Users {
                         (6, self.image.as_str())
                     ][..])?;
                     db.next()?;
+                    Ok(())
                 }else{
-                    return Ok("Такой пользователь уже есть".to_string());
+                    return Err(err::UserErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) }));
                 }
             },
             Err(e) => return Err(e),
         }
-        Ok("Успешно".to_string())
+        
     }
 
     pub fn find_id(id:usize) -> Result<Users, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:Users = Users::empty_user();
         let mut db = connection.prepare("SELECT * FROM users where Id = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
-        while let State::Row = db.next()? {
-            let ret:Users = Users{
-                name: db.read(1)?,
-                surname: db.read(2)?,
-                password: db.read(3)?,
-                email: db.read(4)?,
-                role: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
-                image: db.read(6)?,
-            } ;
-            res = ret;
-        }
-        Ok(res)
+        db.next()?; 
+        Ok(Users{
+            name: db.read(1)?,
+            surname: db.read(2)?,
+            password: db.read(3)?,
+            email: db.read(4)?,
+            role: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+            image: db.read(6)?,
+        } )
     }
 
-    fn check_user_exsist(email:&str)->Result<i32, err::UserErr>{
+    fn check_user_exsist(email:&str)->Result<bool, err::UserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:i32 = 0;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, email),
         ][..])?;
-        while let State::Row = db.next()? {
-           res = db.read::<String, _>(0).unwrap().parse::<i32>().unwrap();
+        db.next()?;
+        let res = db.read::<String, _>(0).unwrap_or("0".to_string()).parse::<i32>().unwrap_or_default();
+        if res != 0{ 
+            Ok(true)
+        }else{
+            Ok(false)
         }
-        Ok(res)
     }
 
     pub fn update(&self, id:usize) -> Result<(), err::UserErr>{
@@ -367,7 +366,7 @@ impl Subscribe{
 }
 
 impl SubscribeAndUser{
-    pub fn link(&self)-> Result<(), err::SubscribeAndUserErr>{
+    pub fn link(&self) -> Result<(), err::SubscribeAndUserErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         match SubscribeAndUser::check_exist_link(self.id_users){
             Ok(b) => {
@@ -395,7 +394,7 @@ impl SubscribeAndUser{
         
     }
 
-    fn check_exist_link(id_user:usize) ->Result<bool, err::SubscribeAndUserErr> {
+    fn check_exist_link(id_user:usize) -> Result<bool, err::SubscribeAndUserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT Id FROM subscribe_and_user WHERE IdUsers = ?;")?;
         db.bind::<&[(_, &str)]>(&[
@@ -412,6 +411,48 @@ impl SubscribeAndUser{
         else{
             Ok(true)
         }
+    }
+
+    pub fn delete_link(id_user: usize) -> Result<(), err::SubscribeAndUserErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        match SubscribeAndUser::check_exist_link(id_user){
+            Ok(b) => {
+                if b {
+                let mut db = connection.prepare("DELETE FROM subscribe_and_user WHERE IdUsers = ?;")?;
+                db.bind::<&[(_, &str)]>(&[
+                    (1, id_user.to_string().as_str()),
+                ][..])?;
+                db.next()?;
+                Ok(())
+                }else {
+                    Ok(())
+                }
+            },
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn get_user_link(id_user:usize) -> Result<ReturnedSubscribe, err::SubscribeAndUserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT Id FROM subscribe_and_user WHERE IdUsers = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id_user.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        let mut db1 = connection.prepare("SELECT * FROM subscribe WHERE Id = ?;")?;
+        let id:String = db.read(0)?;
+        db1.bind::<&[(_, &str)]>(&[
+            (1, id.as_str()),
+        ][..])?;
+        db1.next()?;
+        return Ok(ReturnedSubscribe{ 
+            id: db1.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
+            name: db1.read(1)?,
+            count_month: db1.read::<String, _>(2).unwrap().parse::<i32>().unwrap(),
+            title: db1.read(3)?,
+            description: db1.read(4)?,
+            discount: db1.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+         });
     }
 }
 

@@ -9,7 +9,7 @@ pub struct LoginRequest{
 }
 
 #[derive(Deserialize)]
-pub struct UserData{
+pub struct UpdateProfileData{
     pub token: String,
     pub name_field: String,
     pub information: String,
@@ -20,14 +20,28 @@ pub struct TransmittedToken{
     pub token: String
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct TransmittedUsers{
+#[derive(Deserialize)]
+pub struct RegistrationUsers{
+    pub password: String,
+    pub email: String,
+}
+
+#[derive(Deserialize)]
+pub struct AddingUsers{
+    pub token: String,
     pub name: String,
     pub surname: String,
     pub password: String,
     pub email: String,
-    pub image: String,
     pub role: i32,
+}
+
+#[derive(Deserialize)]
+pub struct UpdatingUsers{
+    pub token: String,
+    pub id: usize,
+    pub name_field: String,
+    pub information: String,
 }
 
 #[derive(Deserialize)]
@@ -53,5 +67,5 @@ pub struct ReturnedSubscribe {
 #[derive(Deserialize)]
 pub struct TransmittedSubscribeAndUser{
     pub token: String,
-    pub id: i32,
+    pub id: usize,
 }
