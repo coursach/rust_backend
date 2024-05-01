@@ -15,6 +15,12 @@ pub struct UpdateProfileData{
     pub information: String,
 }
 
+#[derive(Deserialize)]
+pub struct UpdateProfileData1{
+    pub name_field: String,
+    pub information: String,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct TransmittedToken{
     pub token: String

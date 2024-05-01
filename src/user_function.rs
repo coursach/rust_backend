@@ -3,31 +3,43 @@ use chrono::prelude::*;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
 use crate::models::{Users, Subscribe, SubscribeAndUser};
-use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, TransmittedSubscribeAndUser, TransmittedToken};
+use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, TransmittedSubscribeAndUser, TransmittedToken, UpdateProfileData1};
 use crate::function::*;
 
 
-struct Token{
+pub struct Token{
     message:String,
 }
 
 #[derive(Debug)]
-enum ApiTokenError{
+pub enum ApiTokenError{
     Missing, Invalid
 }
 
-use rocket::request::{self, Outcome, Request, FromRequest};
+use rocket::request::{Outcome, Request, FromRequest};
 
 #[rocket::async_trait]
 impl <'r> FromRequest<'r> for Token{
     type Error = ApiTokenError;
-
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self,Self::Error>{
         match request.headers().get_one("token") {
             None => Outcome::Error((Status::BadRequest, ApiTokenError::Missing)),
-            Some(k) => Outcome::Success(Token{message:k.to_string()}),
-        }
-    }  
+            Some(k) => {
+                match check_is_user_correct_with_token(k.to_string()) {
+                    Ok(c) =>{
+                        if c {
+                            return Outcome::Success(Token{message:k.to_string()})
+                        }else{
+                            return Outcome::Error((Status::Unauthorized, ApiTokenError::Invalid));
+                        }
+                    },
+                    Err(_) => {
+                        println!("{}", k);
+                        return Outcome::Error((Status::BadRequest, ApiTokenError::Missing));}
+                }
+            }
+        }  
+    }
 }
 
 #[post("/user_token", data="<data>")]
@@ -54,6 +66,57 @@ pub fn registration_user(user_data: String) -> Status{
     }
 }
 
+
+#[post("/user", data="<user_data>", format ="json")]
+pub fn update_profile(user_data: String, token: Token) -> Status{
+    match serde_json::from_str::<UpdateProfileData1>(&user_data) {
+    Ok(u) => {
+        match get_user_data_from_token(token.message.to_string()) {
+            Ok(token_data) => { 
+                match u.name_field.as_str() {
+                    "Name" => {
+                        println!("fsdfsdf");
+                        let mut user = Users::empty_user();
+                        user.name = u.information;
+                        match user.update(token_data.0) {
+                            Ok(_) => Status::Ok,
+                            Err(_) => Status::InternalServerError,
+                        }
+                    },
+                    "Surname" => {
+                        let mut user = Users::empty_user();
+                        user.surname = u.information;
+                        match user.update(token_data.0) {
+                            Ok(_) => Status::Ok,
+                            Err(_) => Status::InternalServerError,
+                        }
+                    },
+                    "Email" => {
+                        let mut user = Users::empty_user();
+                        user.email = u.information;
+                        match user.update(token_data.0) {
+                            Ok(_) => Status::Ok,
+                            Err(_) => Status::InternalServerError,
+                        }
+                    },
+                    "Password" => {
+                        let mut user = Users::empty_user();
+                        user.password = u.information;
+                        match user.update(token_data.0) {
+                            Ok(_) => Status::Ok,
+                            Err(_) => Status::InternalServerError,
+                        }
+                    },
+                    _ => Status::UnprocessableEntity,
+                }
+            },
+            Err(_) => Status::Unauthorized,
+        }
+    },
+    Err(_) => Status::BadRequest,
+    }
+}
+/*
 #[post("/user", data="<user_data>", format ="json")]
 pub fn update_profile(user_data: String) -> Status{
     match serde_json::from_str::<UpdateProfileData>(&user_data) {
@@ -106,7 +169,7 @@ pub fn update_profile(user_data: String) -> Status{
     },
     Err(_) => Status::BadRequest,
     }
-}
+}*/
 
 #[post("/user?<token>", format = "image/jpeg", data = "<data>")]
 pub async fn update_image_profile_jpeg(data: Data<'_>, token: String) -> Status{
