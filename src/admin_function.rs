@@ -161,3 +161,6 @@ pub fn add_subscibe(data_subscribe: String) -> Status{
     Err(_) => Status::BadRequest,
     }
 }
+
+
+// All admin function for manipulating content

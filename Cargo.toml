@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 jsonwebtoken = {version = "8.1.1", default-features = false}
 sqlite = "0.34.0"
-rocket = {version = "0.5.0", features = ["json"]}
+rocket = {version = "0.5.0", features = ["secrets", "json"]}
 rocket_codegen = "0.5.0"
 r2d2 = "0.8"
 serde = { version = "1.0", features = ["derive"] }
@@ -15,6 +15,7 @@ serde_json = "1.0"
 custom_derive ="0.1.7"
 lazy_static = "1.4.0"
 chrono = "0.4.23"
+ws = {package = "rocket_ws", version = "0.1.0"}
 
 [dependencies.rocket_contrib]
 version = "*"

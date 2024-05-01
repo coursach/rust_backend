@@ -6,7 +6,7 @@ use jsonwebtoken::{
 use lazy_static::lazy_static;
 use rocket::{
     http::Status,
-    request::{FromRequest, Outcome},
+    //request::{FromRequest, Outcome},
     response::status::Custom,
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,6 @@ use serde::{Deserialize, Serialize};
 // This is to demonstrate shuttle will not deploy when a test fails.
 // FIX: remove the extra space character and try deploying again
 const BEARER: &str = "Bearer ";
-const AUTHORIZATION: &str = "Authorization";
 
 /// Key used for symmetric token encoding
 const SECRET: &str = "secret";
@@ -39,21 +38,6 @@ pub(crate) struct Claims {
     exp: usize,
 }
 
-// Rocket specific request guard implementation
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for Claims {
-    type Error = AuthenticationError;
-
-    async fn from_request(request: &'r rocket::Request<'_>) -> Outcome<Self, Self::Error> {
-        match request.headers().get_one(AUTHORIZATION) {
-            None => Outcome::Error((Status::Forbidden, AuthenticationError::Missing)),
-            Some(value) => match Claims::from_authorization(value) {
-                Err(e) => Outcome::Error((Status::Forbidden, e)),
-                Ok(claims) => Outcome::Success(claims),
-            },
-        }
-    }
-}
 
 impl Claims {
     pub(crate) fn from_name(name: &str) -> Self {

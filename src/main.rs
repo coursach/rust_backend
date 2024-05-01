@@ -1,7 +1,12 @@
 
 #[macro_use] extern crate rocket; 
 
-use rocket::http::Status; 
+
+use rocket::fs::NamedFile;
+
+//use chrono::Duration;
+use rocket::tokio::time::{self, Duration};
+use rocket::{http::{Cookie, CookieJar, Status}, request::FromRequest, response::stream::{Event, EventStream}, time::OffsetDateTime}; 
 use serde_json::json;
 use rocket_contrib::json::Json;
 
@@ -60,11 +65,91 @@ fn login(login_string: String) ->(Status, String){
     }
 }
 
+/*
+#[get("/user_id")]
+fn user_id(cookies: &CookieJar<'_>){
+    let cookie = Cookie::new("id", "test");
+    //let now = OffsetDateTime::now_utc();
+    cookies.add_private(cookie);
+    println!("{:?}",cookies.get_private("id"));
+}
+*/
 
+
+use ws::{Message, Stream, WebSocket};
+/* 
+#[get("/echo?channel")]
+fn echo_channel(ws: ws::WebSocket) -> ws::Channel<'static> {
+    use rocket::futures::{SinkExt, StreamExt};
+
+    ws.channel(move |mut stream| Box::pin(async move {
+        while let Some(message) = stream.next().await {
+            let _ = stream.send(message?).await;
+        }
+
+        Ok(())
+    }))
+}
+
+#[get("/echo?stream")]
+fn echo_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
+    ws::Stream! { ws =>
+        for await message in ws {
+            yield message?;
+        }
+    }
+}
+*/
+/* 
+#[get("/echo")]
+async fn echo_compose() -> Option<NamedFile>{
+    NamedFile::open("data/video/mem.mp4").await.ok()
+}
+*/
+use std::net::SocketAddr;
+use std::fs::File;
+use rocket::response::stream::{TextStream, ReaderStream};
+use rocket::Shutdown;
+use std::io::{self, Read};
+use rocket::futures::stream::{repeat, StreamExt};
+/* 
+#[get("/echo")]
+fn echo_compose() -> TextStream![String]{
+    TextStream!{
+    }
+}*/
+
+#[get("/echo")]
+fn echo_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
+    ws::Stream! { ws =>
+        for await message in ws {
+            match message{
+                Ok(_) => {
+                    let mut file = File::open("data/image/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiMzplbWFpbDoxMjM0NSIsImV4cCI6MTcxMzUzNzI2OX0.aliUvUNy5Jb369up7BwIUl6GoZmVxQuHMd1sM3hdWws.jpeg").unwrap();
+                    println!("dasdasdasd");
+                    let mut buf = Vec::new();
+                    let _ = file.read_to_end(&mut buf);
+                    yield Message::Binary(buf);
+                },
+                Err(_) => yield Message::Text("sadasd".to_string()),   
+            }
+            yield message?;
+        }
+    }
+}
+#[get("/echo1")]
+async fn echo_compose() -> Option<NamedFile>{
+    NamedFile::open("data/video/mem.mp4").await.ok()
+}
+/* 
+#[get("/stream/hi/<n>")]
+fn one_hi_per_ms(mut shutdown: Shutdown, n: u8) -> TextStream![&'static str] {
+    TextStream(repeat("hi").take(100))
+}*/
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![get_all_subscribe, login])
+    rocket::build().mount("/", routes![get_all_subscribe, login, user_token, echo_stream, echo_compose])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])

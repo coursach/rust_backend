@@ -2,12 +2,39 @@
 use chrono::prelude::*;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
-
 use crate::models::{Users, Subscribe, SubscribeAndUser};
 use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, TransmittedSubscribeAndUser, TransmittedToken};
 use crate::function::*;
 
 
+struct Token{
+    message:String,
+}
+
+#[derive(Debug)]
+enum ApiTokenError{
+    Missing, Invalid
+}
+
+use rocket::request::{self, Outcome, Request, FromRequest};
+
+#[rocket::async_trait]
+impl <'r> FromRequest<'r> for Token{
+    type Error = ApiTokenError;
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self,Self::Error>{
+        match request.headers().get_one("token") {
+            None => Outcome::Error((Status::BadRequest, ApiTokenError::Missing)),
+            Some(k) => Outcome::Success(Token{message:k.to_string()}),
+        }
+    }  
+}
+
+#[post("/user_token", data="<data>")]
+pub fn user_token(data: String, token: Token){
+    println!("{data}");
+    println!("{}", token.message);
+}
 
 //All function to manipulate with profile user
 #[post("/user", data="<user_data>", format ="json")]
