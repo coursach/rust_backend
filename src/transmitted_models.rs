@@ -10,16 +10,10 @@ pub struct LoginRequest{
 
 #[derive(Deserialize)]
 pub struct UpdateProfileData{
-    pub token: String,
     pub name_field: String,
     pub information: String,
 }
 
-#[derive(Deserialize)]
-pub struct UpdateProfileData1{
-    pub name_field: String,
-    pub information: String,
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct TransmittedToken{

@@ -3,7 +3,7 @@ use chrono::prelude::*;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
 use crate::models::{Users, Subscribe, SubscribeAndUser};
-use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, TransmittedSubscribeAndUser, TransmittedToken, UpdateProfileData1};
+use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, TransmittedSubscribeAndUser, TransmittedToken};
 use crate::function::*;
 
 
@@ -42,12 +42,6 @@ impl <'r> FromRequest<'r> for Token{
     }
 }
 
-#[post("/user_token", data="<data>")]
-pub fn user_token(data: String, token: Token){
-    println!("{data}");
-    println!("{}", token.message);
-}
-
 //All function to manipulate with profile user
 #[post("/user", data="<user_data>", format ="json")]
 pub fn registration_user(user_data: String) -> Status{
@@ -69,7 +63,7 @@ pub fn registration_user(user_data: String) -> Status{
 
 #[post("/user", data="<user_data>", format ="json")]
 pub fn update_profile(user_data: String, token: Token) -> Status{
-    match serde_json::from_str::<UpdateProfileData1>(&user_data) {
+    match serde_json::from_str::<UpdateProfileData>(&user_data) {
     Ok(u) => {
         match get_user_data_from_token(token.message.to_string()) {
             Ok(token_data) => { 

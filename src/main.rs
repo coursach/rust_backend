@@ -5,7 +5,7 @@
 use rocket::fs::NamedFile;
 
 //use chrono::Duration;
-use rocket::tokio::time::{self, Duration};
+//use rocket::tokio::time::{self, Duration};
 use rocket::{http::{Cookie, CookieJar, Status}, request::FromRequest, response::stream::{Event, EventStream}, time::OffsetDateTime}; 
 use serde_json::json;
 use rocket_contrib::json::Json;
@@ -106,12 +106,12 @@ async fn echo_compose() -> Option<NamedFile>{
     NamedFile::open("data/video/mem.mp4").await.ok()
 }
 */
-use std::net::SocketAddr;
+//use std::net::SocketAddr;
 use std::fs::File;
-use rocket::response::stream::{TextStream, ReaderStream};
-use rocket::Shutdown;
-use std::io::{self, Read};
-use rocket::futures::stream::{repeat, StreamExt};
+//use rocket::response::stream::{TextStream, ReaderStream};
+//use rocket::Shutdown;
+use std::io::Read;
+//use rocket::futures::stream::{repeat, StreamExt};
 /* 
 #[get("/echo")]
 fn echo_compose() -> TextStream![String]{
@@ -149,7 +149,7 @@ fn one_hi_per_ms(mut shutdown: Shutdown, n: u8) -> TextStream![&'static str] {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![get_all_subscribe, login, user_token, echo_stream, echo_compose])
+    rocket::build().mount("/", routes![get_all_subscribe, login, echo_stream, echo_compose])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])
