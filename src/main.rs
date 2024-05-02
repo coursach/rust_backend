@@ -3,12 +3,8 @@
 
 
 use rocket::fs::NamedFile;
-
-//use chrono::Duration;
-//use rocket::tokio::time::{self, Duration};
-use rocket::{http::{Cookie, CookieJar, Status}, request::FromRequest, response::stream::{Event, EventStream}, time::OffsetDateTime}; 
-use serde_json::json;
-use rocket_contrib::json::Json;
+use rocket::http::Status; 
+use rocket::serde::json::Json;
 
 use models::*;
 use transmitted_models::*;
@@ -25,43 +21,34 @@ mod user_function;
 mod admin_function;
 
 #[get("/subscribe")]
-fn get_all_subscribe() ->(Status, String){
+fn get_all_subscribe() ->Result<Json<Vec<ReturnedSubscribes>>, Status>{
     match Subscribe::all() {
-        Ok(v) =>(Status::Ok, Json(json!({"result": v})).to_string()),
-        Err(e) => (Status::InternalServerError, Json(json!({"result": format!("{:?}", e)})).to_string()),
+        Ok(v) => Ok(Json(v)),
+        Err(_) => Err(Status::InternalServerError),
     }
 }
 
-#[post("/login", data="<login_string>", format ="json")]
-fn login(login_string: String) ->(Status, String){
-    match serde_json::from_str::<LoginRequest>(&login_string) {
-        Ok(v)=>{
-            match Users::login(v.email.clone(), v.password.clone()) {
-                Ok(u) => {
-                    match u.0 {
-                        true => {
-                            let claim = Claims::from_name(&format!("{}:{}:{}",u.1 , v.email, v.password));
-                            let response = TransmittedToken{
-                                token: match claim.into_token(){
-                                    Ok(s) => s,
-                                    Err(_) => todo!(),
-                                }
-                            };
-                            (Status::Ok, Json(json!(response)).to_string())
-                        },
-                        false => (Status::Unauthorized, Json(json!({
-                            "result": "нет"
-                        })).to_string()),
-                    }
+#[post("/login", data="<login_data>", format ="json")]
+fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status>{
+    match Users::login(login_data.email.clone(), login_data.password.clone()) {
+        Ok(u) => {
+            match u.0 {
+                true => {
+                    let claim = Claims::from_name(&format!("{}:{}:{}",u.1 , login_data.email, login_data.password));
+                    let token_string;
+                    match claim.into_token(){
+                        Ok(s) => token_string = s,
+                        Err(_) => return Err(Status::Unauthorized),
+                    };
+                    let transmitted_token = TransmittedToken{
+                        token: token_string,
+                    };
+                    Ok(Json(transmitted_token))
                 },
-                Err(_) => (Status::Unauthorized, Json(json!({
-                    "result": "null"
-                })).to_string()),
+                false => Err(Status::Unauthorized),
             }
-        }, 
-        Err(e)=>(Status::Ok, Json(json!({
-            "result": e.to_string()
-        })).to_string()),
+        },
+        Err(_) => Err(Status::Unauthorized),
     }
 }
 
@@ -76,7 +63,7 @@ fn user_id(cookies: &CookieJar<'_>){
 */
 
 
-use ws::{Message, Stream, WebSocket};
+//use ws::{Message, Stream, WebSocket};
 /* 
 #[get("/echo?channel")]
 fn echo_channel(ws: ws::WebSocket) -> ws::Channel<'static> {
@@ -107,10 +94,10 @@ async fn echo_compose() -> Option<NamedFile>{
 }
 */
 //use std::net::SocketAddr;
-use std::fs::File;
+//use std::fs::File;
 //use rocket::response::stream::{TextStream, ReaderStream};
 //use rocket::Shutdown;
-use std::io::Read;
+//use std::io::Read;
 //use rocket::futures::stream::{repeat, StreamExt};
 /* 
 #[get("/echo")]
@@ -118,7 +105,7 @@ fn echo_compose() -> TextStream![String]{
     TextStream!{
     }
 }*/
-
+/*
 #[get("/echo")]
 fn echo_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
     ws::Stream! { ws =>
@@ -136,23 +123,23 @@ fn echo_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
             yield message?;
         }
     }
-}
+}*/
+
 #[get("/images/<name>")]
-async fn get_image(name: &str) -> Result<Option<NamedFile>, Status> {
+async fn get_image(name: &str) -> Result<NamedFile, Status> {
     match NamedFile::open(format!("data/image/{}", name.to_string())).await.ok(){
-        Some(v) => Ok(Some(v)),
+        Some(v) => Ok(v),
         None => Err(Status::NotFound),
     }
 }
 
 #[launch]
 fn rocket() -> _ {
-    
-    rocket::build().mount("/", routes![get_all_subscribe, login, echo_stream, get_image])
+    rocket::build().mount("/", routes![get_all_subscribe, login, get_image])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])
-    .mount("/user/get", routes![get_subscibe_to_profile, get_user_profile, get_subscibe_to_promocode])
+    .mount("/user/get", routes![get_subscibe_to_profile, get_user_profile, get_subscibe_to_promocode, get_content_from_token])
     .mount("/registration", routes![registration_user])
     .mount("/admin/update", routes![update_subscibe, update_user])
     .mount("/admin/add", routes![add_subscibe, add_user])

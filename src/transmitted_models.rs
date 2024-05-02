@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 
 #[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct LoginRequest{
     pub email: String,
     pub password: String   
@@ -16,6 +17,7 @@ pub struct UpdateProfileData{
 
 
 #[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct TransmittedToken{
     pub token: String
 }
@@ -55,6 +57,7 @@ pub struct TransmittedSubscribe {
 }
 
 #[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
 pub struct ReturnedSubscribes {
     pub id: usize,
     pub name : String,
@@ -72,6 +75,7 @@ pub struct ReturnedSubscribe {
     pub title : String,
     pub description : String,
     pub discount :i32,
+    pub level: usize,
 }
 
 #[derive(Serialize)]

@@ -17,8 +17,5 @@ lazy_static = "1.4.0"
 chrono = "0.4.23"
 ws = {package = "rocket_ws", version = "0.1.0"}
 
-[dependencies.rocket_contrib]
-version = "*"
-default-features = false
-features = ["json"]
+
 

@@ -1,10 +1,11 @@
 
 use chrono::prelude::*;
+use rocket::fs::NamedFile;
 use serde_json::json;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
-use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo};
+use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File};
 use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser};
 use crate::function::*;
 
@@ -46,33 +47,26 @@ impl <'r> FromRequest<'r> for Token{
 
 //All function to manipulate with profile user
 #[post("/user", data="<user_data>", format ="json")]
-pub fn registration_user(user_data: String) -> Status{
-    match serde_json::from_str::<RegistrationUsers>(&user_data) {
-    Ok(r_u) => {
-        let mut user = Users::empty_user();
-        user.email = r_u.email;
-        user.password = r_u.password;
-        user.role = 2;
-        match user.add(){
-            Ok(_) => Status::Created,
-            Err(_) => Status::Conflict,
-        }     
-    },
-    Err(_) => Status::BadRequest,
-    }
+pub fn registration_user(user_data: Json<RegistrationUsers>) -> Status{
+    let mut user = Users::empty_user();
+    user.email = user_data.email.clone();
+    user.password = user_data.password.clone();
+    user.role = 2;
+    user.image = "data/image/default.png".to_string();
+    match user.add(){
+        Ok(_) => Status::Created,
+        Err(_) => Status::Conflict,
+    }     
 }
 
 #[post("/user", data="<user_data>", format ="json")]
-pub fn update_profile(user_data: String, token: Token) -> Status{
-    match serde_json::from_str::<UpdateProfileData>(&user_data) {
-    Ok(u) => {
+pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Status{
         match get_user_data_from_token(token.info.to_string()) {
             Ok(token_data) => { 
-                match u.name_field.as_str() {
+                match user_data.name_field.as_str() {
                     "Name" => {
-                        println!("fsdfsdf");
                         let mut user = Users::empty_user();
-                        user.name = u.information;
+                        user.name = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => Status::Ok,
                             Err(_) => Status::InternalServerError,
@@ -80,7 +74,7 @@ pub fn update_profile(user_data: String, token: Token) -> Status{
                     },
                     "Surname" => {
                         let mut user = Users::empty_user();
-                        user.surname = u.information;
+                        user.surname = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => Status::Ok,
                             Err(_) => Status::InternalServerError,
@@ -88,7 +82,7 @@ pub fn update_profile(user_data: String, token: Token) -> Status{
                     },
                     "Email" => {
                         let mut user = Users::empty_user();
-                        user.email = u.information;
+                        user.email = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => Status::Ok,
                             Err(_) => Status::InternalServerError,
@@ -96,7 +90,7 @@ pub fn update_profile(user_data: String, token: Token) -> Status{
                     },
                     "Password" => {
                         let mut user = Users::empty_user();
-                        user.password = u.information;
+                        user.password = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => Status::Ok,
                             Err(_) => Status::InternalServerError,
@@ -107,9 +101,6 @@ pub fn update_profile(user_data: String, token: Token) -> Status{
             },
             Err(_) => Status::Unauthorized,
         }
-    },
-    Err(_) => Status::BadRequest,
-    }
 }
 
 #[post("/user", format = "image/jpeg", data = "<data>")]
@@ -314,5 +305,38 @@ pub fn get_subscibe_to_promocode(code:&str ,token:Token) -> Status{
             }
         },
         Err(_) => Status::InternalServerError,
+    }
+}
+
+#[post("/content/<content_id>")]
+pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<NamedFile, Status>{
+    match get_user_data_from_token(token.info){
+        Ok(token_data) => {
+            match SubscribeAndUser::get_user_link(token_data.0){
+                Ok(r_s) => {
+                    match Content::return_level_subscribe_id(content_id) {
+                        Ok(level_subscribe_content) => {
+                            if level_subscribe_content == r_s.level || level_subscribe_content == 0 || r_s.level == 3{
+                                match File::return_path(content_id){
+                                    Ok(path) => {
+                                        println!("{}", path);
+                                        match NamedFile::open(format!("data/video/{}", path)).await.ok(){
+                                            Some(v) => Ok(v),
+                                            None => Err(Status::NotFound),
+                                        }
+                                    },
+                                    Err(_) => Err(Status::InternalServerError),
+                                }
+                            }else{
+                                Err(Status::Forbidden)
+                            }
+                        },
+                        Err(_) =>  Err(Status::BadRequest), 
+                    } 
+                }, 
+                Err(_) => Err(Status::Unauthorized),
+            }
+        },
+        Err(_) => Err(Status::InternalServerError),
     }
 }

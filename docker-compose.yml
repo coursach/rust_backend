@@ -2,10 +2,16 @@ version: "3.7.0"
 
 services: 
   rocket:
-    build: .
-    command: |
-      /app/rust_backend
-    environment:
-      - DATABASE_URL=data/cinema.db
+    build: 
+      context: . 
+      dockerfile: Dockerfile
     ports:
       - 8000:8000
+    restart: on-failure
+    volumes:
+      - ./data:/app/data
+    networks:
+      - huystack
+networks:
+  huystack:
+   driver: bridge  

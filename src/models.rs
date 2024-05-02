@@ -454,6 +454,7 @@ impl SubscribeAndUser{
             title: db1.read(3)?,
             description: db1.read(4)?,
             discount: db1.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+            level: db1.read::<String, _>(6).unwrap().parse::<usize>().unwrap()
          });
     }
 }
@@ -495,6 +496,20 @@ impl File {
         db.next()?;
         Ok(())
     }
+
+    pub fn return_path(id: usize) -> Result<String, err::FileErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM file WHERE IdContent = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        let result = match db.read::<String, _>(2){
+            Ok(u) => u,
+            Err(_) => "".to_string(), 
+        };
+        Ok(result)
+    }
 }
 
 impl ContentForPreferences {
@@ -521,6 +536,39 @@ impl Content {
         ][..])?;
         db.next()?;
         Ok(())
+    }
+
+    pub fn return_level_subscribe_id(id: usize) -> Result<usize, err::ContentErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM content WHERE Id = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        match db.read::<String, _>(5)?.parse::<usize>() {
+            Ok(u) => Ok(u),
+            Err(_) => return Err(err::ContentErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
+        }
+    }
+
+    pub fn return_content_id(name:String) -> Result<usize, err::ContentErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM content WHERE Name = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, name.as_str()),
+        ][..])?;
+        db.next()?;
+        match db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0) {
+            0 => return Err(err::ContentErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
+            u => Ok(u) 
+        }
+    }
+
+    pub fn check_video_path(id: usize) -> Result<String, err::ContentErr>{
+        match File::return_path(id) {
+            Ok(s) => Ok(s),
+            Err(_) => Err(err::ContentErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
+        }
     }
 }
 
