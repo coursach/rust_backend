@@ -147,6 +147,7 @@ async fn get_image(name: &str) -> Result<Option<NamedFile>, Status> {
 
 #[launch]
 fn rocket() -> _ {
+    
     rocket::build().mount("/", routes![get_all_subscribe, login, echo_stream, get_image])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])

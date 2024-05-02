@@ -1,0 +1,13 @@
+version: "3.7.0"
+
+services:
+  front:
+    image: 
+  rocket:
+    build: .
+    command: |
+      /app/rust_backend
+    environment:
+      - DATABASE_URL=data/cinema.db
+    ports:
+      - 8000:8000
