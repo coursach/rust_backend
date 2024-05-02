@@ -124,7 +124,6 @@ pub struct File {
 pub struct History {
     pub id_user :i32,
     pub id_content :i32,
-    pub end_see :i32,
 }
 
 pub struct Role {
@@ -474,11 +473,10 @@ impl Role{
 impl History{
     pub fn add(&self)-> Result<(), err::HistoryErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO history ('IdUser', 'IdContent', 'EndSee') VALUES (?, ?, ?);")?;
+        let mut db = connection.prepare("INSERT INTO history ('IdUser', 'IdContent') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_user.to_string().as_str()),
             (2, self.id_content.to_string().as_str()),
-            (3, self.end_see.to_string().as_str()),
         ][..])?;
         db.next()?;
         Ok(())

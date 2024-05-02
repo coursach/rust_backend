@@ -68,6 +68,16 @@ pub struct ReturnedSubscribes {
 }
 
 #[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ReturnedContens {
+    pub id: usize,
+    pub name : String,
+    pub description: String,
+    pub description_details: String,
+    pub image_path: String,
+    pub level_subscribe: usize,
+}
+#[derive(Serialize)]
 pub struct ReturnedSubscribe {
     pub id: usize,
     pub name : String,

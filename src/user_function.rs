@@ -5,7 +5,7 @@ use serde_json::json;
 use rocket::serde::json::Json;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
-use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File};
+use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History};
 use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser};
 use crate::function::*;
 
@@ -321,7 +321,10 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
                                     Ok(path) => {
                                         println!("{}", path);
                                         match NamedFile::open(format!("data/video/{}", path)).await.ok(){
-                                            Some(v) => Ok(v),
+                                            Some(v) => {
+                                                //let history = History{ id_user: token_data.0 as usize, id_content: content_id as usize };
+                                                Ok(v)
+                                            },
                                             None => Err(Status::NotFound),
                                         }
                                     },
@@ -340,3 +343,5 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
         Err(_) => Err(Status::InternalServerError),
     }
 }
+
+
