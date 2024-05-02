@@ -55,7 +55,7 @@ pub struct TransmittedSubscribe {
 }
 
 #[derive(Serialize)]
-pub struct ReturnedSubscribe {
+pub struct ReturnedSubscribes {
     pub id: usize,
     pub name : String,
     pub count_month :i32,
@@ -64,8 +64,23 @@ pub struct ReturnedSubscribe {
     pub discount :i32,
 }
 
-#[derive(Deserialize)]
-pub struct TransmittedSubscribeAndUser{
-    pub token: String,
+#[derive(Serialize)]
+pub struct ReturnedSubscribe {
     pub id: usize,
+    pub name : String,
+    pub dead_line :String,
+    pub title : String,
+    pub description : String,
+    pub discount :i32,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct GetUser{
+    pub name: String,
+    pub surname: String,
+    pub email: String,
+    pub role: String,
+    pub image_url: String,
+    pub have_subscribe: bool,
 }

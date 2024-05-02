@@ -1,8 +1,10 @@
 
+use std::usize;
+
 use serde::{Deserialize, Serialize};
 use sqlite::State;
 
-use crate::ReturnedSubscribe;
+use crate::{ReturnedSubscribes, ReturnedSubscribe};
 
 pub mod err{
     use sqlite::Error as sqERR;
@@ -332,12 +334,12 @@ impl Subscribe{
         Ok(())
     }
 
-    pub fn all() -> Result<Vec<ReturnedSubscribe>, err::SubscribeErr>{
+    pub fn all() -> Result<Vec<ReturnedSubscribes>, err::SubscribeErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:Vec<ReturnedSubscribe> = Vec::new();
+        let mut res:Vec<ReturnedSubscribes> = Vec::new();
         let mut db = connection.prepare("SELECT * FROM subscribe;")?;
         while let State::Row = db.next()? {
-            let ret = ReturnedSubscribe{
+            let ret = ReturnedSubscribes{
                 id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
                 name: db.read(1)?,
                 count_month: db.read::<String, _>(2).unwrap().parse::<i32>().unwrap(),
@@ -394,7 +396,7 @@ impl SubscribeAndUser{
         
     }
 
-    fn check_exist_link(id_user:usize) -> Result<bool, err::SubscribeAndUserErr> {
+    pub fn check_exist_link(id_user:usize) -> Result<bool, err::SubscribeAndUserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT Id FROM subscribe_and_user WHERE IdUsers = ?;")?;
         db.bind::<&[(_, &str)]>(&[
@@ -434,13 +436,13 @@ impl SubscribeAndUser{
 
     pub fn get_user_link(id_user:usize) -> Result<ReturnedSubscribe, err::SubscribeAndUserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("SELECT Id FROM subscribe_and_user WHERE IdUsers = ?;")?;
+        let mut db = connection.prepare("SELECT * FROM subscribe_and_user WHERE IdUsers = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id_user.to_string().as_str()),
         ][..])?;
         db.next()?;
         let mut db1 = connection.prepare("SELECT * FROM subscribe WHERE Id = ?;")?;
-        let id:String = db.read(0)?;
+        let id:String = db.read(1)?;
         db1.bind::<&[(_, &str)]>(&[
             (1, id.as_str()),
         ][..])?;
@@ -448,7 +450,7 @@ impl SubscribeAndUser{
         return Ok(ReturnedSubscribe{ 
             id: db1.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
             name: db1.read(1)?,
-            count_month: db1.read::<String, _>(2).unwrap().parse::<i32>().unwrap(),
+            dead_line: db.read(3)?,
             title: db1.read(3)?,
             description: db1.read(4)?,
             discount: db1.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
@@ -532,5 +534,16 @@ impl Codepromo {
         ][..])?;
         db.next()?;
         Ok(())
+    }
+
+    pub fn check_for_description(description: &str) -> Result<(usize, usize), err::CodepromoErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM codepromo WHERE Description = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, description),
+        ][..])?;
+        db.next()?;
+
+        return Ok((db.read::<i64, _>(2).unwrap() as usize, db.read::<i64, _>(3).unwrap() as usize));
     }
 }

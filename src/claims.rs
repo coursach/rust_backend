@@ -21,7 +21,7 @@ const SECRET: &str = "secret";
 
 lazy_static! {
     /// Time before token expires (aka exp claim)
-    static ref TOKEN_EXPIRATION: Duration = Duration::minutes(5);
+    static ref TOKEN_EXPIRATION: Duration = Duration::days(180);
 }
 
 // Used when decoding a token to `Claims`

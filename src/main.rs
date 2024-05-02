@@ -137,23 +137,21 @@ fn echo_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
         }
     }
 }
-#[get("/echo1")]
-async fn echo_compose() -> Option<NamedFile>{
-    NamedFile::open("data/video/mem.mp4").await.ok()
+#[get("/images/<name>")]
+async fn get_image(name: &str) -> Result<Option<NamedFile>, Status> {
+    match NamedFile::open(format!("data/image/{}", name.to_string())).await.ok(){
+        Some(v) => Ok(Some(v)),
+        None => Err(Status::NotFound),
+    }
 }
-/* 
-#[get("/stream/hi/<n>")]
-fn one_hi_per_ms(mut shutdown: Shutdown, n: u8) -> TextStream![&'static str] {
-    TextStream(repeat("hi").take(100))
-}*/
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![get_all_subscribe, login, echo_stream, echo_compose])
+    rocket::build().mount("/", routes![get_all_subscribe, login, echo_stream, get_image])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])
-    .mount("/user/get", routes![get_subscibe_to_profile])
+    .mount("/user/get", routes![get_subscibe_to_profile, get_user_profile, get_subscibe_to_promocode])
     .mount("/registration", routes![registration_user])
     .mount("/admin/update", routes![update_subscibe, update_user])
     .mount("/admin/add", routes![add_subscibe, add_user])
