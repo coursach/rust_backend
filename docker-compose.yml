@@ -1,8 +1,6 @@
 version: "3.7.0"
 
-services:
-  front:
-    image: 
+services: 
   rocket:
     build: .
     command: |
