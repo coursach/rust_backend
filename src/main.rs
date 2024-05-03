@@ -53,7 +53,7 @@ fn get_all_subscribe() ->Result<Json<Vec<ReturnedSubscribes>>, Status>{
     }
 }
 
-#[post("/login", data="<login_data>", format ="json")]
+#[post("/login", data="<login_data>")]
 fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status>{
     match Users::login(login_data.email.clone(), login_data.password.clone()) {
         Ok(u) => {
@@ -79,29 +79,6 @@ fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status
 #[options("/login")]
 fn login_option() -> Status{
     Status::Ok
-}
-#[post("/login", data="<login_data>")]
-fn login_without_data(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status>{
-    match Users::login(login_data.email.clone(), login_data.password.clone()) {
-        Ok(u) => {
-            match u.0 {
-                true => {
-                    let claim = Claims::from_name(&format!("{}:{}:{}",u.1 , login_data.email, login_data.password));
-                    let token_string;
-                    match claim.into_token(){
-                        Ok(s) => token_string = s,
-                        Err(_) => return Err(Status::Unauthorized),
-                    };
-                    let transmitted_token = TransmittedToken{
-                        token: token_string,
-                    };
-                    Ok(Json(transmitted_token))
-                },
-                false => Err(Status::Unauthorized),
-            }
-        },
-        Err(_) => Err(Status::Unauthorized),
-    }
 }
 /*
 #[get("/user_id")]
@@ -187,7 +164,7 @@ async fn get_image(name: &str) -> Result<NamedFile, Status> {
 #[launch]
 fn rocket() -> _ {
     rocket::build().attach(Cors)
-    .mount("/", routes![get_all_subscribe, login, login_option, login_without_data, get_image])
+    .mount("/", routes![get_all_subscribe, login, login_option,get_image])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])
