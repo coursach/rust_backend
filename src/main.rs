@@ -38,7 +38,7 @@ impl Fairing for Cors {
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
         response.set_header(Header::new(
             "Access-Control-Allow-Methods",
-            "POST, PATCH, PUT, DELETE, HEAD, GET",
+            "POST, PATCH, PUT, DELETE, HEAD, OPTIONS, GET",
         ));
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
@@ -53,7 +53,7 @@ fn get_all_subscribe() ->Result<Json<Vec<ReturnedSubscribes>>, Status>{
     }
 }
 
-#[post("/login", data="<login_data>", format ="json")]
+#[options("/login", data="<login_data>", format ="json")]
 fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status>{
     match Users::login(login_data.email.clone(), login_data.password.clone()) {
         Ok(u) => {
@@ -76,7 +76,6 @@ fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status
         Err(_) => Err(Status::Unauthorized),
     }
 }
-
 /*
 #[get("/user_id")]
 fn user_id(cookies: &CookieJar<'_>){
