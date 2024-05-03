@@ -53,7 +53,7 @@ fn get_all_subscribe() ->Result<Json<Vec<ReturnedSubscribes>>, Status>{
     }
 }
 
-#[options("/login", data="<login_data>", format ="json")]
+#[post("/login", data="<login_data>", format ="json")]
 fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status>{
     match Users::login(login_data.email.clone(), login_data.password.clone()) {
         Ok(u) => {
@@ -75,6 +75,10 @@ fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status
         },
         Err(_) => Err(Status::Unauthorized),
     }
+}
+#[options("/login")]
+fn login_option() -> Status{
+    Status::Ok
 }
 /*
 #[get("/user_id")]
@@ -160,7 +164,7 @@ async fn get_image(name: &str) -> Result<NamedFile, Status> {
 #[launch]
 fn rocket() -> _ {
     rocket::build().attach(Cors)
-    .mount("/", routes![get_all_subscribe, login, get_image])
+    .mount("/", routes![get_all_subscribe, login, login_option, get_image])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])
