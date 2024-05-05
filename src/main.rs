@@ -3,10 +3,9 @@
 
 
 use rocket::fs::NamedFile;
-use rocket::http::Status; 
+use rocket::http::{Header, Status};
 use rocket::serde::json::Json;
 use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
 use rocket::{Request, Response};
 
 use models::*;
@@ -35,7 +34,7 @@ impl Fairing for Cors {
     }
 
     async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
-        response.set_header(Header::new("Access-Control-Allow-Origin", "http://localhost:3000"));
+        response.set_header(Header::new("Access-Control-Allow-Origin", "http://localhost:8000"));
         response.set_header(Header::new(
             "Access-Control-Allow-Methods",
             "POST, PATCH, PUT, DELETE, HEAD, OPTIONS, GET",
@@ -75,10 +74,6 @@ fn login(login_data: Json<LoginRequest>) ->Result<Json<TransmittedToken>, Status
         },
         Err(_) => Err(Status::Unauthorized),
     }
-}
-#[options("/login")]
-fn login_option() -> Status{
-    Status::Ok
 }
 /*
 #[get("/user_id")]
@@ -153,6 +148,11 @@ fn echo_stream(ws: ws::WebSocket) -> ws::Stream!['static] {
     }
 }*/
 
+#[options("/<_..>")]
+fn everything() -> Status{
+    Status::Ok
+}
+
 #[get("/images/<name>")]
 async fn get_image(name: &str) -> Result<NamedFile, Status> {
     match NamedFile::open(format!("data/image/{}", name.to_string())).await.ok(){
@@ -163,8 +163,9 @@ async fn get_image(name: &str) -> Result<NamedFile, Status> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().attach(Cors)
-    .mount("/", routes![get_all_subscribe, login, login_option,get_image])
+    rocket::build()
+    .attach(Cors)
+    .mount("/", routes![get_all_subscribe, login, get_image, everything])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])

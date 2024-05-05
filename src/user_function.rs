@@ -322,8 +322,12 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
                                         println!("{}", path);
                                         match NamedFile::open(format!("data/video/{}", path)).await.ok(){
                                             Some(v) => {
-                                                //let history = History{ id_user: token_data.0 as usize, id_content: content_id as usize };
-                                                Ok(v)
+                                                let history = History{ id_user: token_data.0 as usize, id_content: content_id as usize };
+                                                match history.add(){
+                                                    Ok(_) => Ok(v),
+                                                    Err(_) => return Err(Status::InternalServerError),
+                                                }
+                                                
                                             },
                                             None => Err(Status::NotFound),
                                         }
