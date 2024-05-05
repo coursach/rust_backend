@@ -69,7 +69,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                         let mut user = Users::empty_user();
                         user.name = user_data.information.clone();
                         match user.update(token_data.0) {
-                            Ok(_) => Ok(None),
+                            Ok(_) => Ok(Some("fsdfsd".to_string())),
                             Err(_) => Err(Status::InternalServerError),
                         }
                     },
@@ -77,7 +77,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                         let mut user = Users::empty_user();
                         user.surname = user_data.information.clone();
                         match user.update(token_data.0) {
-                            Ok(_) => Ok(None),
+                            Ok(_) => Ok(Some("fsdfsd".to_string())),
                             Err(_) => Err(Status::InternalServerError),
                         }
                     },
