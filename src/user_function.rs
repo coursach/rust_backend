@@ -282,7 +282,7 @@ pub fn unlink_subscibe_to_user(token:Token) -> Status{
     }
 }
 
-#[post("/subscribe")]
+#[get("/subscribe")]
 pub fn get_subscibe_to_profile(token: Token) -> Result<String, Status>{
     match get_user_data_from_token(token.info) {
         Ok(token_data) => {
