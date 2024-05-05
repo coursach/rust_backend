@@ -1,7 +1,6 @@
 
 use std::usize;
 
-use rocket::response::content;
 use serde::{Deserialize, Serialize};
 use sqlite::State;
 
