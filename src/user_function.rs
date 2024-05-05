@@ -86,7 +86,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                         user.email = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => {
-                                let claim = Claims::from_name(&format!("{}:{}:{}", token_data.0 , user.email, user_data.information));
+                                let claim = Claims::from_name(&format!("{}:{}:{}", token_data.0 , user_data.information, token_data.2));
                                 match claim.into_token(){
                                     Ok(s) => Ok(Some(s)),
                                     Err(_) => return Err(Status::Unauthorized),
