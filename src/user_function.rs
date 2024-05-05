@@ -5,6 +5,7 @@ use serde_json::json;
 use rocket::serde::json::Json;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
+use crate::claims::Claims;
 use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History};
 use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser};
 use crate::function::*;
@@ -60,7 +61,7 @@ pub fn registration_user(user_data: Json<RegistrationUsers>) -> Status{
 }
 
 #[post("/user", data="<user_data>", format ="json")]
-pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Status{
+pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Result<Option<String>, Status>{
         match get_user_data_from_token(token.info.to_string()) {
             Ok(token_data) => { 
                 match user_data.name_field.as_str() {
@@ -68,38 +69,50 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Statu
                         let mut user = Users::empty_user();
                         user.name = user_data.information.clone();
                         match user.update(token_data.0) {
-                            Ok(_) => Status::Ok,
-                            Err(_) => Status::InternalServerError,
+                            Ok(_) => Ok(Some("fsdfsd".to_string())),
+                            Err(_) => Err(Status::InternalServerError),
                         }
                     },
                     "Surname" => {
                         let mut user = Users::empty_user();
                         user.surname = user_data.information.clone();
                         match user.update(token_data.0) {
-                            Ok(_) => Status::Ok,
-                            Err(_) => Status::InternalServerError,
+                            Ok(_) => Ok(Some("fsdfsd".to_string())),
+                            Err(_) => Err(Status::InternalServerError),
                         }
                     },
                     "Email" => {
                         let mut user = Users::empty_user();
                         user.email = user_data.information.clone();
                         match user.update(token_data.0) {
-                            Ok(_) => Status::Ok,
-                            Err(_) => Status::InternalServerError,
+                            Ok(_) => {
+                                let claim = Claims::from_name(&format!("{}:{}:{}", token_data.0 , user.email, user_data.information));
+                                match claim.into_token(){
+                                    Ok(s) => Ok(Some(s)),
+                                    Err(_) => return Err(Status::Unauthorized),
+                                }
+                            },
+                            Err(_) =>  Err(Status::InternalServerError),
                         }
                     },
                     "Password" => {
                         let mut user = Users::empty_user();
                         user.password = user_data.information.clone();
                         match user.update(token_data.0) {
-                            Ok(_) => Status::Ok,
-                            Err(_) => Status::InternalServerError,
+                            Ok(_) => {
+                                let claim = Claims::from_name(&format!("{}:{}:{}", token_data.0 , token_data.1, user_data.information));
+                                match claim.into_token(){
+                                    Ok(s) => Ok(Some(s)),
+                                    Err(_) => return Err(Status::Unauthorized),
+                                }
+                            },
+                            Err(_) => Err(Status::InternalServerError),
                         }
                     },
-                    _ => Status::UnprocessableEntity,
+                    _ => Err(Status::UnprocessableEntity),
                 }
             },
-            Err(_) => Status::Unauthorized,
+            Err(_) => Err(Status::Unauthorized),
         }
 }
 
