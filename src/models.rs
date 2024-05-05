@@ -349,6 +349,7 @@ impl Subscribe{
                 title: db.read(3)?,
                 description: db.read(4)?,
                 discount: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
+                price: db.read::<String, _>(7).unwrap().parse::<usize>().unwrap()
             } ;
             res.push(ret);
         }
@@ -459,7 +460,8 @@ impl SubscribeAndUser{
             title: db1.read(3)?,
             description: db1.read(4)?,
             discount: db1.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
-            level: db1.read::<String, _>(6).unwrap().parse::<usize>().unwrap()
+            level: db1.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
+            price: db1.read::<String, _>(7).unwrap().parse::<usize>().unwrap(),
          });
     }
 }

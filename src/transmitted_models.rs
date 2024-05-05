@@ -65,6 +65,7 @@ pub struct ReturnedSubscribes {
     pub title : String,
     pub description : String,
     pub discount :i32,
+    pub price: usize,
 }
 
 #[derive(Serialize)]
@@ -86,6 +87,7 @@ pub struct ReturnedSubscribe {
     pub description : String,
     pub discount :i32,
     pub level: usize,
+    pub price: usize,
 }
 
 #[derive(Serialize)]
