@@ -395,7 +395,27 @@ pub fn all_content_movie() -> Result<Json<Vec<ReturnedContens>>, Status> {
             let mut result = Vec::new();
             loop{
                 match vec.pop(){
-                    Some(c) => result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
+                    Some(c) => if c.level == 2{ result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level })},
+                    None => break,
+                }
+            };
+            Ok(Json(result))
+        },
+        Err(_) => Err(Status::InternalServerError), 
+    }
+}
+#[get("/content/anime")]
+pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> { 
+    match Content::all() {
+        Ok(mut vec) => {
+            let mut result = Vec::new();
+            loop{
+                match vec.pop(){
+                    Some(c) =>{ 
+                        if c.level == 1{
+                            result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level })
+                        }
+                    },
                     None => break,
                 }
             };

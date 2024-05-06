@@ -48,6 +48,10 @@ pub mod err{
     pub enum CodepromoErr{
         DbErr(sqERR),
     }
+    #[derive(Debug)]
+    pub enum WorkersForContentErr{
+        DbErr(sqERR),
+    }
 
     impl From<sqERR> for UserErr {
         fn from(s:sqERR)->Self{
@@ -97,6 +101,11 @@ pub mod err{
     impl From<sqERR> for HistoryErr {
         fn from(s:sqERR)->Self{
             HistoryErr::DbErr(s)
+        }
+    }
+    impl From<sqERR> for WorkersForContentErr {
+        fn from(s:sqERR)->Self{
+            WorkersForContentErr::DbErr(s)
         }
     }
 }
@@ -161,8 +170,13 @@ pub struct Users{
 pub struct Workers {
     pub name : String,
     pub surname : String,
-    pub id_content :i32,
     pub role :i32,
+}
+
+pub struct WorkersForContent {
+    pub id : usize,
+    pub id_content : usize,
+    pub id_workers : usize,
 }
 
 impl Users {
@@ -310,16 +324,19 @@ impl Users {
 impl Workers {
     pub fn add(&self) -> Result<(), err::WorkersErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO workers ('Name', 'Surname', 'IdContent', 'Role') VALUES (?, ?, ?, ?);")?;
+        let mut db = connection.prepare("INSERT INTO workers ('Name', 'Surname', 'IdContent', 'Role') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
             (2, self.surname.as_str()),
-            (3, &self.id_content.to_string()),
-            (4, &self.role.to_string())
+            (3, &self.role.to_string())
         ][..])?;
         db.next()?;
         Ok(())
     }
+}
+
+impl WorkersForContent{
+    
 }
 
 impl Subscribe{
