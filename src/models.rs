@@ -615,12 +615,8 @@ impl Content {
     }
     pub fn return_contents_id(name:String) -> Result<Vec<usize>, err::ContentErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("SELECT * FROM content WHERE Name like %?%;")?;
+        let mut db = connection.prepare(format!("SELECT * FROM content WHERE Name like '%{}%';", name))?;
         let mut result = Vec::new();
-        db.bind::<&[(_, &str)]>(&[
-            (1, name.as_str()),
-        ][..])?;
-        db.next()?;
         while let State::Row = db.next()? {
             result.push(db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0));
         };
