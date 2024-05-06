@@ -169,7 +169,7 @@ fn rocket() -> _ {
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])
-    .mount("/user/get", routes![get_subscibe_to_profile, get_user_profile, get_subscibe_to_promocode, get_content_from_token])
+    .mount("/user/get", routes![get_subscibe_to_profile, get_user_profile, get_subscibe_to_promocode, get_content_from_token, get_history_by_token])
     .mount("/find", routes![find_content])
     .mount("/registration", routes![registration_user])
     .mount("/admin/update", routes![update_subscibe, update_user])

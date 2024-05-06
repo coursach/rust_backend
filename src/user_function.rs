@@ -425,3 +425,25 @@ pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> {
         Err(_) => Err(Status::InternalServerError), 
     }
 }
+
+#[get("/history")]
+pub fn get_history_by_token(token: Token)-> Result<Json<Vec<ReturnedContens>>, Status>{
+    match get_user_data_from_token(token.info){
+        Ok(token_data) => {
+            match History::get_history_by_user(token_data.0){
+                Ok(mut r) => {
+                    let mut contents:Vec<ReturnedContens> = Vec::new();
+                    loop{
+                        match r.pop(){
+                        Some(c) => contents.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
+                            None => break, 
+                        }
+                    };
+                    Ok(Json(contents))
+                },
+                Err(_) => Err(Status::InternalServerError),
+            }
+        },
+        Err(_) => Err(Status::Unauthorized),
+    }
+}

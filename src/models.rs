@@ -512,12 +512,28 @@ impl History{
                     Ok(())
                 }
             },
-            Err(_) => todo!(),
+            Err(_) => return Err(err::HistoryErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
         }
     }
 
-        
+    pub fn get_history_by_user(id: usize) -> Result<Vec<Content>, err::HistoryErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare(format!("SELECT IdContent FROM history where IdUser = {};", id))?;
+        let mut content = Vec::new();
+        while let State::Row = db.next()?
+        {
+            match Content::return_content_by_id(db.read::<String, _>(0).unwrap().parse::<usize>().unwrap()) {
+                Ok(o) => match o {
+                    Some(c) => content.push(c),
+                    None => break,
+                },
+                Err(_) => break,
+            }
+         };
+        Ok(content)
+        }
     }
+        
 
 impl File {
     pub fn add(&self)-> Result<(), err::FileErr>{
@@ -644,12 +660,12 @@ impl Content {
 
     pub fn check_content_exist(id: usize) -> Result<bool, err::ContentErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("SELECT * FROM content WHERE Id = ?;")?;
+        let mut db = connection.prepare("SELECT * FROM history WHERE IdContent = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
         db.next()?;
-        match db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0) {
+        match db.read::<String, _>(0).unwrap_or("0".to_string()).parse::<usize>().unwrap_or(0) {
             0 => return Ok(false),
             _ => return Ok(true),
         }
