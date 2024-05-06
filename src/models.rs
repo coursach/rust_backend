@@ -555,6 +555,25 @@ impl Content {
         Ok(())
     }
 
+    pub fn all() -> Result<Vec<Content>, err::ContentErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM content;")?;
+        let mut content = Vec::new();
+        while let State::Row =  db.next()?
+        {
+        content.push(Content{
+            id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
+            name: db.read::<String, _>(1).unwrap(),
+            description: db.read::<String, _>(2).unwrap(),
+            description_details: db.read::<String, _>(3).unwrap(),
+            image_path: db.read::<String, _>(4).unwrap(),
+            level: db.read::<String, _>(5).unwrap().parse::<usize>().unwrap(),
+            id_mood:db.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
+        });
+        }
+        Ok(content)
+    }
+
     pub fn return_level_subscribe_id(id: usize) -> Result<usize, err::ContentErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM content WHERE Id = ?;")?;
@@ -575,10 +594,20 @@ impl Content {
             (1, name.as_str()),
         ][..])?;
         db.next()?;
-        match db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0) {
-            0 => return Err(err::ContentErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
-            u => Ok(u) 
-        }
+        Ok(db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0))
+    }
+    pub fn return_contents_id(name:String) -> Result<Vec<usize>, err::ContentErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM content WHERE Name = ?;")?;
+        let mut result = Vec::new();
+        db.bind::<&[(_, &str)]>(&[
+            (1, name.as_str()),
+        ][..])?;
+        db.next()?;
+        while let State::Row = db.next()? {
+            result.push(db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0));
+        };
+        Ok(result)
     }
 
     pub fn return_content_by_id(id: usize) -> Result<Option<Content>, err::ContentErr>{

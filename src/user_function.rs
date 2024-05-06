@@ -7,7 +7,7 @@ use rocket::{data::ToByteUnit, http::Status, Data};
 
 use crate::claims::Claims;
 use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History};
-use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser};
+use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser, ReturnedContens};
 use crate::function::*;
 
 
@@ -361,4 +361,46 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
     }
 }
 
+#[get("/content/<name>")]
+pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContens>>, Status> {
+    match Content::return_contents_id(name.to_string()) {
+        Ok(mut v) => {
+            let mut contents:Vec<ReturnedContens> = Vec::new();
+            loop {
+                match v.pop(){
+                    Some(id) => {
+                        match Content::return_content_by_id(id) {
+                            Ok(content) => {
+                                match content {
+                                    Some(c) => contents.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
+                                    None => break ,                                                
+                                }
+                            },
+                            Err(_) => return Err(Status::InternalServerError),                      
+                        }
+                    },
+                    None => break,   
+                }
+            };
+            return Ok(Json(contents))
+        },
+        Err(_) => Err(Status::NotFound),
+    }
+}
 
+#[get("/content/movie")]
+pub fn all_content_movie() -> Result<Json<Vec<ReturnedContens>>, Status> { 
+    match Content::all() {
+        Ok(mut vec) => {
+            let mut result = Vec::new();
+            loop{
+                match vec.pop(){
+                    Some(c) => result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
+                    None => break,
+                }
+            };
+            Ok(Json(result))
+        },
+        Err(_) => Err(Status::InternalServerError), 
+    }
+}
