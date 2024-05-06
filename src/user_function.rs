@@ -373,7 +373,7 @@ pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContens>>, Status> {
                         match Content::return_content_by_id(id) {
                             Ok(content) => {
                                 match content {
-                                    Some(c) => contents.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
+                                    Some(c) => contents.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level }),
                                     None => break ,                                                
                                 }
                             },
@@ -396,7 +396,7 @@ pub fn all_content_movie() -> Result<Json<Vec<ReturnedContens>>, Status> {
             let mut result = Vec::new();
             loop{
                 match vec.pop(){
-                    Some(c) => if c.level == 2{ result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level })},
+                    Some(c) => if c.level == 2{ result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level })},
                     None => break,
                 }
             };
@@ -414,7 +414,7 @@ pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> {
                 match vec.pop(){
                     Some(c) =>{ 
                         if c.level == 1{
-                            result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level })
+                            result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level })
                         }
                     },
                     None => break,
