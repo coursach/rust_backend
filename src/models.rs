@@ -336,7 +336,7 @@ impl Workers {
 }
 
 impl WorkersForContent{
-    
+
 }
 
 impl Subscribe{
@@ -615,7 +615,7 @@ impl Content {
     }
     pub fn return_contents_id(name:String) -> Result<Vec<usize>, err::ContentErr>{
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("SELECT * FROM content WHERE Name = ?;")?;
+        let mut db = connection.prepare("SELECT * FROM content WHERE Name like %?%;")?;
         let mut result = Vec::new();
         db.bind::<&[(_, &str)]>(&[
             (1, name.as_str()),

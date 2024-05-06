@@ -363,9 +363,11 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
 
 #[get("/content/<name>")]
 pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContens>>, Status> {
+    println!("{}",name);
     match Content::return_contents_id(name.to_string()) {
         Ok(mut v) => {
             let mut contents:Vec<ReturnedContens> = Vec::new();
+            
             loop {
                 match v.pop(){
                     Some(id) => {
