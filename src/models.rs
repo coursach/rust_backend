@@ -333,10 +333,81 @@ impl Workers {
         db.next()?;
         Ok(())
     }
+    pub fn get_worker_by_id(id_worker:usize)->Result<Workers, err::WorkersErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT * FROM workers where Id = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id_worker.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        Ok(Workers{
+            name: db.read(1)?,
+            surname: db.read(2)?,
+            role: db.read::<String, _>(3).unwrap().parse::<i32>().unwrap(),
+        })
+    }
 }
 
 impl WorkersForContent{
+    pub fn return_director_by_id_content(id_content:usize)->Result<Vec<usize>, err::WorkersForContentErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT IdWorkers FROM workers_for_content where IdContent = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id_content.to_string().as_str()),
+        ][..])?;
+        let mut res:Vec<usize> = Vec::new();
+        while let State::Row = db.next()? {
+            res.push(db.read::<String, _>(0).unwrap().parse::<usize>().unwrap());
+        }
+        let mut result:Vec<usize> = Vec::new();
+        loop{
+            match res.pop(){
+                Some(i) => {
+                    match Workers::get_worker_by_id(i){
+                        Ok(w) => {
+                            if w.role == 4 {
+                                result.push(i);
+                            }
+                        },
+                        Err(_) => break,
+                    }
+                }
+                None => break
+            }
+        }
+        Ok(result)
+    }
 
+    pub fn return_actor_by_id_content(id_content:usize)->Result<Vec<usize>, err::WorkersForContentErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("SELECT IdWorkers FROM workers_for_content where IdContent = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id_content.to_string().as_str()),
+        ][..])?;
+        let mut res:Vec<usize> = Vec::new();
+        while let State::Row = db.next()? {
+            println!("fdffgf");
+            res.push(db.read::<String, _>(0).unwrap().parse::<usize>().unwrap());
+        }
+        let mut result:Vec<usize> = Vec::new();
+        loop{
+            match res.pop(){
+                Some(i) => {
+
+                    match Workers::get_worker_by_id(i){
+                        Ok(w) => {
+                            if w.role == 3 {
+                                result.push(i);
+                            }
+                        },
+                        Err(_) => break,
+                    }
+                }
+                None => break
+            }
+        }
+        Ok(result)
+    }
 }
 
 impl Subscribe{

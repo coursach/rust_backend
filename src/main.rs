@@ -165,7 +165,7 @@ async fn get_image(name: &str) -> Result<NamedFile, Status> {
 fn rocket() -> _ {
     rocket::build()
     .attach(Cors)
-    .mount("/", routes![get_all_subscribe, login, get_image, everything, all_content_movie, all_content_anime])
+    .mount("/", routes![get_all_subscribe, login, get_image, everything, all_content_movie, all_content_anime, return_info_content_by_id])
     .mount("/user/update", routes![update_profile, update_image_profile_jpeg, update_image_profile_png])
     .mount("/user/link", routes![link_subscibe_to_user])
     .mount("/user/unlink", routes![unlink_subscibe_to_user])

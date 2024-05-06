@@ -6,9 +6,9 @@ use rocket::serde::json::Json;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
 use crate::claims::Claims;
-use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History};
-use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser, ReturnedContens};
-use crate::function::*;
+use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History, Workers};
+use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser, ReturnedContens, ReturnedAllInfoContent, Actor};
+use crate::{function::*, WorkersForContent};
 
 
 pub struct Token{
@@ -445,5 +445,55 @@ pub fn get_history_by_token(token: Token)-> Result<Json<Vec<ReturnedContens>>, S
             }
         },
         Err(_) => Err(Status::Unauthorized),
+    }
+}
+
+#[get("/content/info/<id>")]
+pub fn return_info_content_by_id(id: usize) -> Result<Json<ReturnedAllInfoContent>, Status> {
+    match Content::return_content_by_id(id){
+        Ok(content) => {
+            match content {
+                Some(c) => {
+                    let mut actors:Vec<Actor> = Vec::new();
+                    match WorkersForContent::return_actor_by_id_content(id){
+                        Ok(mut v_a) => {
+                            
+                            loop{
+                                match v_a.pop(){
+                                     Some(a) =>{
+                                         match Workers::get_worker_by_id(a){
+                                             Ok(w) => actors.push(Actor{ surname: w.surname, name: w.name }),
+                                             Err(_) => todo!(),
+                                         }
+                                     },
+                                     None => break,
+                                }
+                            };
+                        },
+                        Err(_) => todo!(),
+                    };
+                    let mut directors:Vec<Actor> = Vec::new();
+                    match WorkersForContent::return_director_by_id_content(id){
+                        Ok(mut v_d) => {
+                            loop{
+                                match v_d.pop(){
+                                     Some(a) =>{
+                                         match Workers::get_worker_by_id(a){
+                                             Ok(w) => directors.push(Actor{ surname: w.surname, name: w.name }),
+                                             Err(_) => todo!(),
+                                         }
+                                     },
+                                     None => break,
+                                }
+                            };
+                        },
+                        Err(_) => todo!(),
+                    };
+                    Ok(Json(ReturnedAllInfoContent{ id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level, actor: actors, director: directors }))
+                },
+                None => Err(Status::NotFound),
+            }
+        },
+        Err(_) => Err(Status::InternalServerError),
     }
 }
