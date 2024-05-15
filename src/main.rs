@@ -48,7 +48,7 @@ impl Fairing for Cors {
 fn get_all_subscribe() ->Result<Json<Vec<ReturnedSubscribes>>, Status>{
     match Subscribe::all() {
         Ok(v) => Ok(Json(v)),
-        Err(_) => Err(Status::InternalServerError),
+        Err(_) => Err(Status::Unauthorized),
     }
 }
 

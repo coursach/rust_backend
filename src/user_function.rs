@@ -70,7 +70,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                         user.name = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => Ok(Some("fsdfsd".to_string())),
-                            Err(_) => Err(Status::InternalServerError),
+                            Err(_) => Err(Status::Unauthorized),
                         }
                     },
                     "Surname" => {
@@ -78,7 +78,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                         user.surname = user_data.information.clone();
                         match user.update(token_data.0) {
                             Ok(_) => Ok(Some("fsdfsd".to_string())),
-                            Err(_) => Err(Status::InternalServerError),
+                            Err(_) => Err(Status::Unauthorized),
                         }
                     },
                     "Email" => {
@@ -92,7 +92,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                                     Err(_) => return Err(Status::Unauthorized),
                                 }
                             },
-                            Err(_) =>  Err(Status::InternalServerError),
+                            Err(_) =>  Err(Status::Unauthorized),
                         }
                     },
                     "Password" => {
@@ -106,7 +106,7 @@ pub fn update_profile(user_data: Json<UpdateProfileData>, token: Token) -> Resul
                                     Err(_) => return Err(Status::Unauthorized),
                                 }
                             },
-                            Err(_) => Err(Status::InternalServerError),
+                            Err(_) => Err(Status::Unauthorized),
                         }
                     },
                     _ => Err(Status::UnprocessableEntity),
@@ -131,7 +131,7 @@ pub async fn update_image_profile_jpeg(data: Data<'_>, token: Token) -> Status{
                             Ok(u)=>{
                                 old_image = u.image;
                             },
-                            Err(_) => return Status::InternalServerError, 
+                            Err(_) => return Status::Unauthorized, 
                         }
                         let mut user = Users::empty_user();
                         user.image = path;
@@ -141,7 +141,7 @@ pub async fn update_image_profile_jpeg(data: Data<'_>, token: Token) -> Status{
                                     match std::fs::remove_file(old_image){
                                         Ok(_) => Status::Ok,
                                         Err(_) => {
-                                            Status::InternalServerError
+                                            Status::Unauthorized
                                         },
                                     }
                                 }else
@@ -149,10 +149,10 @@ pub async fn update_image_profile_jpeg(data: Data<'_>, token: Token) -> Status{
                                     Status::Ok
                                 }
                                 },
-                            Err(_) => Status::InternalServerError,  
+                            Err(_) => Status::Unauthorized,  
                         }
                     },
-                    Err(_) => Status::InternalServerError,
+                    Err(_) => Status::Unauthorized,
                 }
             },
             Err(_) => Status::ExpectationFailed,
@@ -177,7 +177,7 @@ pub async fn update_image_profile_png(data: Data<'_>, token: Token) -> Status{
                                 Ok(u)=>{
                                     old_image = u.image;
                                 },
-                                Err(_) => return Status::InternalServerError, 
+                                Err(_) => return Status::Unauthorized, 
                             }
                             let mut user = Users::empty_user();
                             user.image = path;
@@ -187,17 +187,17 @@ pub async fn update_image_profile_png(data: Data<'_>, token: Token) -> Status{
                                         match std::fs::remove_file(old_image){
                                             Ok(_) => Status::Ok,
                                             Err(_) => {
-                                                Status::InternalServerError
+                                                Status::Unauthorized
                                             },
                                         }
                                     }else{
                                         Status::Ok
                                     }
                                     },
-                                Err(_) => Status::InternalServerError,  
+                                Err(_) => Status::Unauthorized,  
                             }
                         },
-                        Err(_) => Status::InternalServerError,
+                        Err(_) => Status::Unauthorized,
                     }
                 },
                 Err(_) => Status::ExpectationFailed,
@@ -229,11 +229,11 @@ pub fn get_user_profile(token: Token) -> Result<String, Status>{
                             };
                         Ok(Json(json!(user)).to_string())
                     },
-                        Err(_) => Err(Status::InternalServerError),
+                        Err(_) => Err(Status::Unauthorized),
                     }
                     
                 },
-                Err(_) => Err(Status::InternalServerError),
+                Err(_) => Err(Status::Unauthorized),
             }
         },
         Err(_) => Err(Status::Unauthorized),
@@ -253,15 +253,15 @@ pub fn link_subscibe_to_user(id:usize, token: Token) -> Status{
                             let subscribe_and_user = SubscribeAndUser{ id_subscribe: id, id_users: token_data.0, data_end: end };
                             match subscribe_and_user.link(){
                                 Ok(_) => return Status::Ok,
-                                Err(_) => return Status::InternalServerError,
+                                Err(_) => return Status::Unauthorized,
                             }
                         },
-                        None => return Status::InternalServerError,      
+                        None => return Status::Unauthorized,      
                     };
                 },
                 Err(e) => {
                     println!("{:?}", e);
-                    return Status::InternalServerError
+                    return Status::Unauthorized
                 },
             }
         },
@@ -275,7 +275,7 @@ pub fn unlink_subscibe_to_user(token:Token) -> Status{
         Ok(token_data) => {
             match SubscribeAndUser::delete_link(token_data.0) {
                 Ok(_) => Status::Ok,
-                Err(_) => Status::InternalServerError,
+                Err(_) => Status::Unauthorized,
             }
         },
         Err(_) => Status::Unauthorized,
@@ -288,7 +288,7 @@ pub fn get_subscibe_to_profile(token: Token) -> Result<String, Status>{
         Ok(token_data) => {
             match SubscribeAndUser::get_user_link(token_data.0) {
                 Ok(r) => Ok(Json(json!(r)).to_string()),
-                Err(_) => Err(Status::InternalServerError)
+                Err(_) => Err(Status::Unauthorized)
             }
         },
         Err(_) => Err(Status::Unauthorized)
@@ -308,16 +308,16 @@ pub fn get_subscibe_to_promocode(code:&str ,token:Token) -> Status{
                             let subscribe_and_user = SubscribeAndUser{ id_subscribe: date_and_id.0, id_users: token_data.0, data_end: end };
                             match subscribe_and_user.link(){
                                 Ok(_) => return Status::Ok,
-                                Err(_) => return Status::InternalServerError,
+                                Err(_) => return Status::Unauthorized,
                             }
                         },
-                        None => return Status::InternalServerError,      
+                        None => return Status::Unauthorized,      
                     };   
                 },
                 Err(_) => Status::Unauthorized,
             }
         },
-        Err(_) => Status::InternalServerError,
+        Err(_) => Status::Unauthorized,
     }
 }
 
@@ -338,14 +338,14 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
                                                 let history = History{ id_user: token_data.0 as usize, id_content: content_id as usize };
                                                 match history.add(){
                                                     Ok(_) => Ok(v),
-                                                    Err(_) => return Err(Status::InternalServerError),
+                                                    Err(_) => return Err(Status::Unauthorized),
                                                 }
                                                 
                                             },
                                             None => Err(Status::NotFound),
                                         }
                                     },
-                                    Err(_) => Err(Status::InternalServerError),
+                                    Err(_) => Err(Status::Unauthorized),
                                 }
                             }else{
                                 Err(Status::Forbidden)
@@ -357,7 +357,7 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
                 Err(_) => Err(Status::Unauthorized),
             }
         },
-        Err(_) => Err(Status::InternalServerError),
+        Err(_) => Err(Status::Unauthorized),
     }
 }
 
@@ -377,7 +377,7 @@ pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContens>>, Status> {
                                     None => break ,                                                
                                 }
                             },
-                            Err(_) => return Err(Status::InternalServerError),                      
+                            Err(_) => return Err(Status::Unauthorized),                      
                         }
                     },
                     None => break,   
@@ -402,7 +402,7 @@ pub fn all_content_movie() -> Result<Json<Vec<ReturnedContens>>, Status> {
             };
             Ok(Json(result))
         },
-        Err(_) => Err(Status::InternalServerError), 
+        Err(_) => Err(Status::Unauthorized), 
     }
 }
 #[get("/content/anime")]
@@ -422,7 +422,7 @@ pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> {
             };
             Ok(Json(result))
         },
-        Err(_) => Err(Status::InternalServerError), 
+        Err(_) => Err(Status::Unauthorized), 
     }
 }
 
@@ -441,7 +441,7 @@ pub fn get_history_by_token(token: Token)-> Result<Json<Vec<ReturnedContens>>, S
                     };
                     Ok(Json(contents))
                 },
-                Err(_) => Err(Status::InternalServerError),
+                Err(_) => Err(Status::Unauthorized),
             }
         },
         Err(_) => Err(Status::Unauthorized),
@@ -494,6 +494,6 @@ pub fn return_info_content_by_id(id: usize) -> Result<Json<ReturnedAllInfoConten
                 None => Err(Status::NotFound),
             }
         },
-        Err(_) => Err(Status::InternalServerError),
+        Err(_) => Err(Status::Unauthorized),
     }
 }
