@@ -1,14 +1,13 @@
 
 use chrono::prelude::*;
 use rocket::fs::NamedFile;
-use serde_json::json;
 use rocket::serde::json::Json;
 use rocket::{data::ToByteUnit, http::Status, Data};  
 
 use crate::claims::Claims;
 use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History, Workers};
 use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser, ReturnedContens, ReturnedAllInfoContent, Actor};
-use crate::{function::*, WorkersForContent};
+use crate::{function::*, ReturnedSubscribe, WorkersForContent};
 
 
 pub struct Token{
@@ -208,7 +207,7 @@ pub async fn update_image_profile_png(data: Data<'_>, token: Token) -> Status{
 }
 
 #[post("/profile")]
-pub fn get_user_profile(token: Token) -> Result<String, Status>{
+pub fn get_user_profile(token: Token) -> Result<Json<GetUser>, Status>{
     match get_user_data_from_token(token.info.to_string()) {
         Ok(token_data) => {
             match Users::find_id(token_data.0) {
@@ -227,7 +226,7 @@ pub fn get_user_profile(token: Token) -> Result<String, Status>{
                                 image_url: format!("images/{}", u.image.to_string().split_off(11)),
                                 have_subscribe: b, 
                             };
-                        Ok(Json(json!(user)).to_string())
+                        Ok(Json(user))
                     },
                         Err(_) => Err(Status::Unauthorized),
                     }
@@ -283,11 +282,11 @@ pub fn unlink_subscibe_to_user(token:Token) -> Status{
 }
 
 #[get("/subscribe")]
-pub fn get_subscibe_to_profile(token: Token) -> Result<String, Status>{
+pub fn get_subscibe_to_profile(token: Token) -> Result<Json<ReturnedSubscribe>, Status>{
     match get_user_data_from_token(token.info) {
         Ok(token_data) => {
             match SubscribeAndUser::get_user_link(token_data.0) {
-                Ok(r) => Ok(Json(json!(r)).to_string()),
+                Ok(r) => Ok(Json(r)),
                 Err(_) => Err(Status::Unauthorized)
             }
         },
@@ -306,10 +305,13 @@ pub fn get_subscibe_to_promocode(code:&str ,token:Token) -> Status{
                         Some(date_time) => {
                             let end = date_time.format("%d-%m-%Y").to_string();
                             let subscribe_and_user = SubscribeAndUser{ id_subscribe: date_and_id.0, id_users: token_data.0, data_end: end };
-                            match subscribe_and_user.link(){
-                                Ok(_) => return Status::Ok,
-                                Err(_) => return Status::Unauthorized,
+                            if subscribe_and_user.id_subscribe != 0 {
+                                match subscribe_and_user.link(){
+                                    Ok(_) => return Status::Ok,
+                                    Err(_) => return Status::Unauthorized,
+                                }
                             }
+                            return Status::Unauthorized;
                         },
                         None => return Status::Unauthorized,      
                     };   

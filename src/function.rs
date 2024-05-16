@@ -43,7 +43,7 @@ pub fn check_correct_data(id: usize, email: String, password: String) -> bool{
         Err(_) => false,
     }
 }
-
+/*
 pub fn check_is_admin_with_token(token: String) -> Result<bool, AuthenticationError>{
     let user_data = get_user_data_from_token(token)?;
     match check_correct_data(user_data.0, user_data.1, user_data.2){
@@ -58,7 +58,7 @@ pub fn check_is_admin_with_token(token: String) -> Result<bool, AuthenticationEr
         false => Err(AuthenticationError::Expired),
     }
 }
-
+*/
 pub fn check_is_user_correct_with_token(token: String) -> Result<bool, AuthenticationError>{
     let user_data = get_user_data_from_token(token)?;
     match check_correct_data(user_data.0, user_data.1, user_data.2){

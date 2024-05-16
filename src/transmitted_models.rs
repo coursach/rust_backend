@@ -27,7 +27,7 @@ pub struct RegistrationUsers{
     pub password: String,
     pub email: String,
 }
-
+/*
 #[derive(Deserialize)]
 pub struct AddingUsers{
     pub token: String,
@@ -55,7 +55,7 @@ pub struct TransmittedSubscribe {
     pub description : String,
     pub discount :i32,
 }
-
+*/
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct ReturnedSubscribes {

@@ -13,7 +13,7 @@ use transmitted_models::*;
 use claims::Claims;
 
 use user_function::*;
-use admin_function::*;
+//use admin_function::*;
 
 mod function;
 pub mod models;
@@ -172,8 +172,8 @@ fn rocket() -> _ {
     .mount("/user/get", routes![get_subscibe_to_profile, get_user_profile, get_subscibe_to_promocode, get_content_from_token, get_history_by_token])
     .mount("/find", routes![find_content])
     .mount("/registration", routes![registration_user])
-    .mount("/admin/update", routes![update_subscibe, update_user])
-    .mount("/admin/add", routes![add_subscibe, add_user])
+    //.mount("/admin/update", routes![update_subscibe, update_user])
+    //.mount("/admin/add", routes![add_subscibe, add_user])
 }
 
 
