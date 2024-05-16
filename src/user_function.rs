@@ -489,7 +489,7 @@ pub fn return_info_content_by_id(id: usize) -> Result<Json<ReturnedAllInfoConten
                         },
                         Err(_) => todo!(),
                     };
-                    Ok(Json(ReturnedAllInfoContent{ id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level, actor: actors, director: directors }))
+                    Ok(Json(ReturnedAllInfoContent{ id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level, actor: actors, director: directors }))
                 },
                 None => Err(Status::NotFound),
             }
