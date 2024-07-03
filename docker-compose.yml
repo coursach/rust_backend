@@ -10,8 +10,12 @@ services:
     restart: on-failure
     volumes:
       - ./data:/app/data
+      - ./src:/app/src
+    command: sh -c "cargo watch -x run"
     networks:
       - huystack
+
+
 networks:
   huystack:
    driver: bridge  

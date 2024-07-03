@@ -1,4 +1,3 @@
-
 use std::usize;
 
 use serde::{Deserialize, Serialize};
@@ -6,159 +5,162 @@ use sqlite::State;
 
 use crate::{ReturnedSubscribes, ReturnedSubscribe};
 
-pub mod err{
+pub mod err {
     use sqlite::Error as sqERR;
     #[derive(Debug)]
-    pub enum UserErr{
+    pub enum UserErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum WorkersErr{
+    pub enum WorkersErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum SubscribeErr{
+    pub enum SubscribeErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum RoleErr{
+    pub enum RoleErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum SubscribeAndUserErr{
+    pub enum SubscribeAndUserErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum HistoryErr{
+    pub enum HistoryErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum FileErr{
+    pub enum FileErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum ContentForPreferencesErr{
+    pub enum ContentForPreferencesErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum ContentErr{
+    pub enum ContentErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum CodepromoErr{
+    pub enum CodepromoErr {
         DbErr(sqERR),
     }
     #[derive(Debug)]
-    pub enum WorkersForContentErr{
+    pub enum WorkersForContentErr {
         DbErr(sqERR),
     }
 
     impl From<sqERR> for UserErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             UserErr::DbErr(s)
         }
     }
     impl From<sqERR> for WorkersErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             WorkersErr::DbErr(s)
         }
     }
     impl From<sqERR> for SubscribeErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             SubscribeErr::DbErr(s)
         }
     }
     impl From<sqERR> for SubscribeAndUserErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             SubscribeAndUserErr::DbErr(s)
         }
     }
     impl From<sqERR> for RoleErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             RoleErr::DbErr(s)
         }
     }
     impl From<sqERR> for CodepromoErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             CodepromoErr::DbErr(s)
         }
     }
     impl From<sqERR> for ContentErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             ContentErr::DbErr(s)
         }
     }
     impl From<sqERR> for ContentForPreferencesErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             ContentForPreferencesErr::DbErr(s)
         }
     }
     impl From<sqERR> for FileErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             FileErr::DbErr(s)
         }
     }
     impl From<sqERR> for HistoryErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             HistoryErr::DbErr(s)
         }
     }
     impl From<sqERR> for WorkersForContentErr {
-        fn from(s:sqERR)->Self{
+        fn from(s: sqERR) -> Self {
             WorkersForContentErr::DbErr(s)
         }
     }
 }
-pub struct Codepromo{
+pub struct Codepromo {
     pub description: String,
-    pub id_subscribe:i32
+    pub id_subscribe: usize,
+    pub days: usize,
 }
 
-pub struct Content{
+pub struct Content {
     pub id: usize,
-    pub name: String, 
-    pub description: String, 
+    pub name: String,
+    pub description: String,
     pub description_details: String,
     pub image_path: String,
     pub level: usize,
-    pub id_mood:usize,
+    pub id_mood: usize,
 }
 
 pub struct ContentForPreferences {
-    pub id_content :i32,
-    pub id_users :i32,
+    pub id_content: i32,
+    pub id_users: i32,
 }
 
 pub struct File {
-    pub id_content :i32,
-    pub path : String,
+    pub id_content: i32,
+    pub path: String,
 }
 
 pub struct History {
-    pub id_user :usize,
-    pub id_content :usize,
+    pub id_user: usize,
+    pub id_content: usize,
 }
 
 pub struct Role {
-    pub name : String,
+    pub name: String,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct Subscribe {
-    pub name : String,
-    pub count_month :i32,
-    pub title : String,
-    pub description : String,
-    pub discount :i32,
+    pub name: String,
+    pub count_month: usize,
+    pub title: String,
+    pub description: String,
+    pub discount: usize,
+    pub level: usize,
+    pub price: usize,
 }
 
 pub struct SubscribeAndUser {
-    pub id_subscribe :usize,
-    pub id_users :usize,
-    pub data_end : String,
+    pub id_subscribe: usize,
+    pub id_users: usize,
+    pub data_end: String,
 }
 
-pub struct Users{
+pub struct Users {
     pub name: String,
     pub surname: String,
     pub password: String,
@@ -168,23 +170,23 @@ pub struct Users{
 }
 
 pub struct Workers {
-    pub name : String,
-    pub surname : String,
-    pub role :i32,
+    pub name: String,
+    pub surname: String,
+    pub role: i32,
 }
 
 pub struct WorkersForContent {
-    pub id : usize,
-    pub id_content : usize,
-    pub id_workers : usize,
+    pub id: usize,
+    pub id_content: usize,
+    pub id_workers: usize,
 }
 
 impl Users {
-    pub fn empty_user() -> Users{
+    pub fn empty_user() -> Users {
         Users { name: "".to_string(), surname: "".to_string(), password: "".to_string(), email: "".to_string(), image: "".to_string(), role: 0 }
     }
 
-    pub fn login(email: String, password:String)-> Result<(bool, usize), err::UserErr>{
+    pub fn login(email: String, password: String) -> Result<(bool, usize), err::UserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ? and Password = ?;")?;
         db.bind::<&[(_, &str)]>(&[
@@ -199,7 +201,7 @@ impl Users {
         }
     }
 
-    pub fn add(&self) -> Result<(), err::UserErr>{
+    pub fn add(&self) -> Result<(), err::UserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         match Users::check_user_exsist(&self.email) {
             Ok(b) => {
@@ -215,33 +217,40 @@ impl Users {
                     ][..])?;
                     db.next()?;
                     Ok(())
-                }else{
+                } else {
                     return Err(err::UserErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) }));
                 }
-            },
+            }
             Err(e) => return Err(e),
         }
-        
     }
 
-    pub fn find_id(id:usize) -> Result<Users, err::UserErr>{
+    pub fn delete(id: usize) -> Result<(), err::UserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare(format!("DELETE FROM users WHERE Id = {};", id))?;
+        db.next()?;
+        Ok(())
+    }
+
+
+    pub fn find_id(id: usize) -> Result<Users, err::UserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM users where Id = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
-        db.next()?; 
-        Ok(Users{
+        db.next()?;
+        Ok(Users {
             name: db.read(1)?,
             surname: db.read(2)?,
             password: db.read(3)?,
             email: db.read(4)?,
             role: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
             image: db.read(6)?,
-        } )
+        })
     }
 
-    fn check_user_exsist(email:&str)->Result<bool, err::UserErr>{
+    fn check_user_exsist(email: &str) -> Result<bool, err::UserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT Id FROM users where Email = ?;")?;
         db.bind::<&[(_, &str)]>(&[
@@ -249,14 +258,14 @@ impl Users {
         ][..])?;
         db.next()?;
         let res = db.read::<String, _>(0).unwrap_or("0".to_string()).parse::<i32>().unwrap_or_default();
-        if res != 0{ 
+        if res != 0 {
             Ok(true)
-        }else{
+        } else {
             Ok(false)
         }
     }
 
-    pub fn update(&self, id:usize) -> Result<(), err::UserErr>{
+    pub fn update(&self, id: usize) -> Result<(), err::UserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut changed = false;
         if self.name != "" {
@@ -313,16 +322,16 @@ impl Users {
             db.next()?;
             changed = true;
         }
-        if changed {
-            return Ok(());
-        }else{
-            return Err(err::UserErr::DbErr(sqlite::Error{code: Some(300), message: rocket::serde::__private::Option::Some("".to_string()) }));
-        }
+        return if changed {
+            Ok(())
+        } else {
+            Err(err::UserErr::DbErr(sqlite::Error { code: Some(300), message: Some("".to_string()) }))
+        };
     }
 }
 
 impl Workers {
-    pub fn add(&self) -> Result<(), err::WorkersErr>{
+    pub fn add(&self) -> Result<(), err::WorkersErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO workers ('Name', 'Surname', 'IdContent', 'Role') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
@@ -333,14 +342,14 @@ impl Workers {
         db.next()?;
         Ok(())
     }
-    pub fn get_worker_by_id(id_worker:usize)->Result<Workers, err::WorkersErr>{
+    pub fn get_worker_by_id(id_worker: usize) -> Result<Workers, err::WorkersErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM workers where Id = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id_worker.to_string().as_str()),
         ][..])?;
         db.next()?;
-        Ok(Workers{
+        Ok(Workers {
             name: db.read(1)?,
             surname: db.read(2)?,
             role: db.read::<String, _>(3).unwrap().parse::<i32>().unwrap(),
@@ -348,27 +357,27 @@ impl Workers {
     }
 }
 
-impl WorkersForContent{
-    pub fn return_director_by_id_content(id_content:usize)->Result<Vec<usize>, err::WorkersForContentErr>{
+impl WorkersForContent {
+    pub fn return_director_by_id_content(id_content: usize) -> Result<Vec<usize>, err::WorkersForContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT IdWorkers FROM workers_for_content where IdContent = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id_content.to_string().as_str()),
         ][..])?;
-        let mut res:Vec<usize> = Vec::new();
+        let mut res: Vec<usize> = Vec::new();
         while let State::Row = db.next()? {
             res.push(db.read::<String, _>(0).unwrap().parse::<usize>().unwrap());
         }
-        let mut result:Vec<usize> = Vec::new();
-        loop{
-            match res.pop(){
+        let mut result: Vec<usize> = Vec::new();
+        loop {
+            match res.pop() {
                 Some(i) => {
-                    match Workers::get_worker_by_id(i){
+                    match Workers::get_worker_by_id(i) {
                         Ok(w) => {
                             if w.role == 4 {
                                 result.push(i);
                             }
-                        },
+                        }
                         Err(_) => break,
                     }
                 }
@@ -378,28 +387,27 @@ impl WorkersForContent{
         Ok(result)
     }
 
-    pub fn return_actor_by_id_content(id_content:usize)->Result<Vec<usize>, err::WorkersForContentErr>{
+    pub fn return_actor_by_id_content(id_content: usize) -> Result<Vec<usize>, err::WorkersForContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT IdWorkers FROM workers_for_content where IdContent = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id_content.to_string().as_str()),
         ][..])?;
-        let mut res:Vec<usize> = Vec::new();
+        let mut res: Vec<usize> = Vec::new();
         while let State::Row = db.next()? {
             println!("fdffgf");
             res.push(db.read::<String, _>(0).unwrap().parse::<usize>().unwrap());
         }
-        let mut result:Vec<usize> = Vec::new();
-        loop{
-            match res.pop(){
+        let mut result: Vec<usize> = Vec::new();
+        loop {
+            match res.pop() {
                 Some(i) => {
-
-                    match Workers::get_worker_by_id(i){
+                    match Workers::get_worker_by_id(i) {
                         Ok(w) => {
                             if w.role == 3 {
                                 result.push(i);
                             }
-                        },
+                        }
                         Err(_) => break,
                     }
                 }
@@ -410,61 +418,72 @@ impl WorkersForContent{
     }
 }
 
-impl Subscribe{
-    pub fn add(&self) -> Result<(), err::SubscribeErr>{
+impl Subscribe {
+    pub fn add(&self) -> Result<(), err::SubscribeErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO subscribe ('Name', 'Count_mouth', 'Title', 'Description','Discount') VALUES (?, ?, ?, ?, ?);")?;
+        let mut db = connection.prepare("INSERT INTO subscribe ('Name', 'Count_month', 'Title', 'Description','Discount', 'Level', 'Price') VALUES (?, ?, ?, ?, ?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
             (2, &self.count_month.to_string()),
             (3, self.title.as_str()),
             (4, self.description.as_str()),
-            (5, &self.discount.to_string())
+            (5, &self.discount.to_string()),
+            (6, self.level.to_string().as_str()),
+            (7, self.price.to_string().as_str())
         ][..])?;
         db.next()?;
         Ok(())
     }
 
-    pub fn all() -> Result<Vec<ReturnedSubscribes>, err::SubscribeErr>{
+    pub fn delete(id: usize) -> Result<(), err::SubscribeErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut res:Vec<ReturnedSubscribes> = Vec::new();
+        let mut db = connection.prepare("DELETE FROM subscribe WHERE Id = (?);")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        Ok(())
+    }
+
+    pub fn all() -> Result<Vec<ReturnedSubscribes>, err::SubscribeErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res: Vec<ReturnedSubscribes> = Vec::new();
         let mut db = connection.prepare("SELECT * FROM subscribe;")?;
         while let State::Row = db.next()? {
-            let ret = ReturnedSubscribes{
+            let ret = ReturnedSubscribes {
                 id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
                 name: db.read(1)?,
                 count_month: db.read::<String, _>(2).unwrap().parse::<i32>().unwrap(),
                 title: db.read(3)?,
                 description: db.read(4)?,
                 discount: db.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
-                price: db.read::<String, _>(7).unwrap().parse::<usize>().unwrap()
-            } ;
+                price: db.read::<String, _>(7).unwrap().parse::<usize>().unwrap(),
+            };
             res.push(ret);
         }
         Ok(res)
     }
 
-    pub fn count_month(id: usize) ->Result<usize, err::SubscribeErr>{
+    pub fn count_month(id: usize) -> Result<usize, err::SubscribeErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let res:usize;
+        let res: usize;
         let mut db = connection.prepare("SELECT Count_month FROM subscribe where Id = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
-        db.next()? ;
+        db.next()?;
         res = db.read::<String, _>(0).unwrap().parse::<usize>().unwrap();
         if res == 0 {
-            return Err(err::SubscribeErr::DbErr(sqlite::Error::from(sqlite::Error{ code: Some(12), message: Some("rep".to_string())})));
+            return Err(err::SubscribeErr::DbErr(sqlite::Error::from(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })));
         }
         Ok(res)
     }
-
 }
 
-impl SubscribeAndUser{
-    pub fn link(&self) -> Result<(), err::SubscribeAndUserErr>{
+impl SubscribeAndUser {
+    pub fn link(&self) -> Result<(), err::SubscribeAndUserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        match SubscribeAndUser::check_exist_link(self.id_users){
+        match SubscribeAndUser::check_exist_link(self.id_users) {
             Ok(b) => {
                 if b {
                     let mut db = connection.prepare("UPDATE subscribe_and_user SET IdSubscribe = ?, DataEnd = ? WHERE IdUsers = ?;")?;
@@ -474,7 +493,7 @@ impl SubscribeAndUser{
                         (3, self.id_users.to_string().as_str()),
                     ][..])?;
                     db.next()?;
-                }else{
+                } else {
                     let mut db = connection.prepare("INSERT INTO subscribe_and_user ('IdSubscribe', 'IdUsers', 'DataEnd') VALUES (?, ?, ?);")?;
                     db.bind::<&[(_, &str)]>(&[
                         (1, self.id_subscribe.to_string().as_str()),
@@ -484,46 +503,44 @@ impl SubscribeAndUser{
                     db.next()?;
                 }
                 Ok(())
-            },
+            }
             Err(_) => todo!(),
         }
-        
     }
 
-    pub fn check_exist_link(id_user:usize) -> Result<bool, err::SubscribeAndUserErr> {
+    pub fn check_exist_link(id_user: usize) -> Result<bool, err::SubscribeAndUserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT Id FROM subscribe_and_user WHERE IdUsers = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id_user.to_string().as_str()),
         ][..])?;
         db.next()?;
-        let result = match db.read::<i64, _>(0){
+        let result = match db.read::<i64, _>(0) {
             Ok(u) => u as usize,
-            Err(_) => 0 as usize, 
+            Err(_) => 0usize,
         };
-        if result == 0{
+        if result == 0 {
             Ok(false)
-        }
-        else{
+        } else {
             Ok(true)
         }
     }
 
-    pub fn delete_link(id_user: usize) -> Result<(), err::SubscribeAndUserErr>{
+    pub fn delete_link(id_user: usize) -> Result<(), err::SubscribeAndUserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        match SubscribeAndUser::check_exist_link(id_user){
+        match SubscribeAndUser::check_exist_link(id_user) {
             Ok(b) => {
                 if b {
-                let mut db = connection.prepare("DELETE FROM subscribe_and_user WHERE IdUsers = ?;")?;
-                db.bind::<&[(_, &str)]>(&[
-                    (1, id_user.to_string().as_str()),
-                ][..])?;
-                db.next()?;
-                Ok(())
-                }else {
+                    let mut db = connection.prepare("DELETE FROM subscribe_and_user WHERE IdUsers = ?;")?;
+                    db.bind::<&[(_, &str)]>(&[
+                        (1, id_user.to_string().as_str()),
+                    ][..])?;
+                    db.next()?;
+                    Ok(())
+                } else {
                     Ok(())
                 }
-            },
+            }
             Err(e) => Err(e),
         }
     }
@@ -536,12 +553,12 @@ impl SubscribeAndUser{
         ][..])?;
         db.next()?;
         let mut db1 = connection.prepare("SELECT * FROM subscribe WHERE Id = ?;")?;
-        let id:String = db.read(1)?;
+        let id: String = db.read(1)?;
         db1.bind::<&[(_, &str)]>(&[
             (1, id.as_str()),
         ][..])?;
         db1.next()?;
-        return Ok(ReturnedSubscribe{ 
+        return Ok(ReturnedSubscribe {
             id: db1.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
             name: db1.read(1)?,
             dead_line: db.read(3)?,
@@ -550,12 +567,12 @@ impl SubscribeAndUser{
             discount: db1.read::<String, _>(5).unwrap().parse::<i32>().unwrap(),
             level: db1.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
             price: db1.read::<String, _>(7).unwrap().parse::<usize>().unwrap(),
-         });
+        });
     }
 }
 
-impl Role{
-    pub fn link(&self)-> Result<(), err::RoleErr>{
+impl Role {
+    pub fn link(&self) -> Result<(), err::RoleErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO role ('Name') VALUES (?);")?;
         db.bind::<&[(_, &str)]>(&[
@@ -566,14 +583,14 @@ impl Role{
     }
 }
 
-impl History{
-    pub fn add(&self)-> Result<(), err::HistoryErr>{
+impl History {
+    pub fn add(&self) -> Result<(), err::HistoryErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         match Content::check_content_exist(self.id_content) {
             Ok(b) => {
                 if b {
                     Ok(())
-                }else{
+                } else {
                     let mut db = connection.prepare("INSERT INTO history ('IdUser', 'IdContent') VALUES (?, ?);")?;
                     db.bind::<&[(_, &str)]>(&[
                         (1, self.id_user.to_string().as_str()),
@@ -582,12 +599,12 @@ impl History{
                     db.next()?;
                     Ok(())
                 }
-            },
+            }
             Err(_) => return Err(err::HistoryErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
         }
     }
 
-    pub fn get_history_by_user(id: usize) -> Result<Vec<Content>, err::HistoryErr>{
+    pub fn get_history_by_user(id: usize) -> Result<Vec<Content>, err::HistoryErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare(format!("SELECT IdContent FROM history where IdUser = {};", id))?;
         let mut content = Vec::new();
@@ -600,14 +617,14 @@ impl History{
                 },
                 Err(_) => break,
             }
-         };
+        };
         Ok(content)
-        }
     }
-        
+}
+
 
 impl File {
-    pub fn add(&self)-> Result<(), err::FileErr>{
+    pub fn add(&self) -> Result<(), err::FileErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO file ('IdContent', 'Path') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
@@ -618,23 +635,20 @@ impl File {
         Ok(())
     }
 
-    pub fn return_path(id: usize) -> Result<String, err::FileErr>{
+    pub fn return_path(id: usize) -> Result<String, err::FileErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM file WHERE IdContent = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
         db.next()?;
-        let result = match db.read::<String, _>(2){
-            Ok(u) => u,
-            Err(_) => "".to_string(), 
-        };
+        let result = db.read::<String, _>(2).unwrap_or_else(|_| "".to_string());
         Ok(result)
     }
 }
 
 impl ContentForPreferences {
-    pub fn add(&self)-> Result<(), err::ContentForPreferencesErr>{
+    pub fn add(&self) -> Result<(), err::ContentForPreferencesErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO content_for_preferences ('IdContent', 'IdUsers') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
@@ -647,38 +661,50 @@ impl ContentForPreferences {
 }
 
 impl Content {
-    pub fn add(&self)-> Result<(), err::ContentErr>{
+    pub fn add(&self) -> Result<(), err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO content ('Name', 'Description', 'DescriptionDetails') VALUES (?, ?, ?);")?;
+        let mut db = connection.prepare("INSERT INTO content ('Name', 'Description', 'DescriptionDetails', 'ImagePath', 'LevelSubscribe', 'IdMood') VALUES (?, ?, ?, ?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
             (2, self.description.as_str()),
             (3, self.description_details.as_str()),
+            (4, self.image_path.as_str()),
+            (5, self.level.to_string().as_str()),
+            (6, self.id_mood.to_string().as_str()),
         ][..])?;
         db.next()?;
         Ok(())
     }
 
+    pub fn delete(id:usize) -> Result<(), err::ContentErr>{
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("DELETE FROM content WHERE Id = (?);")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        Ok(())
+    }
     pub fn all() -> Result<Vec<Content>, err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM content;")?;
         let mut content = Vec::new();
-        while let State::Row =  db.next()?
+        while let State::Row = db.next()?
         {
-        content.push(Content{
-            id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
-            name: db.read::<String, _>(1).unwrap(),
-            description: db.read::<String, _>(2).unwrap(),
-            description_details: db.read::<String, _>(3).unwrap(),
-            image_path: db.read::<String, _>(4).unwrap(),
-            level: db.read::<String, _>(5).unwrap().parse::<usize>().unwrap(),
-            id_mood:db.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
-        });
+            content.push(Content {
+                id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
+                name: db.read::<String, _>(1).unwrap(),
+                description: db.read::<String, _>(2).unwrap(),
+                description_details: db.read::<String, _>(3).unwrap(),
+                image_path: db.read::<String, _>(4).unwrap(),
+                level: db.read::<String, _>(5).unwrap().parse::<usize>().unwrap(),
+                id_mood: db.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
+            });
         }
         Ok(content)
     }
 
-    pub fn return_level_subscribe_id(id: usize) -> Result<usize, err::ContentErr>{
+    pub fn return_level_subscribe_id(id: usize) -> Result<usize, err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM content WHERE Id = ?;")?;
         db.bind::<&[(_, &str)]>(&[
@@ -691,7 +717,7 @@ impl Content {
         }
     }
 
-    pub fn return_content_id(name:String) -> Result<usize, err::ContentErr>{
+    pub fn return_content_id(name: String) -> Result<usize, err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM content WHERE Name = ?;")?;
         db.bind::<&[(_, &str)]>(&[
@@ -700,7 +726,7 @@ impl Content {
         db.next()?;
         Ok(db.read::<String, _>(0)?.parse::<usize>().ok().unwrap_or(0))
     }
-    pub fn return_contents_id(name:String) -> Result<Vec<usize>, err::ContentErr>{
+    pub fn return_contents_id(name: String) -> Result<Vec<usize>, err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare(format!("SELECT * FROM content WHERE Name like '%{}%';", name))?;
         let mut result = Vec::new();
@@ -710,39 +736,39 @@ impl Content {
         Ok(result)
     }
 
-    pub fn return_content_by_id(id: usize) -> Result<Option<Content>, err::ContentErr>{
+    pub fn return_content_by_id(id: usize) -> Result<Option<Content>, err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM content WHERE Id = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
         db.next()?;
-        let content = Content{
+        let content = Content {
             id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
             name: db.read::<String, _>(1).unwrap(),
             description: db.read::<String, _>(2).unwrap(),
             description_details: db.read::<String, _>(3).unwrap(),
             image_path: db.read::<String, _>(4).unwrap(),
             level: db.read::<String, _>(5).unwrap().parse::<usize>().unwrap(),
-            id_mood:db.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
+            id_mood: db.read::<String, _>(6).unwrap().parse::<usize>().unwrap(),
         };
         Ok(Some(content))
     }
 
-    pub fn check_content_exist(id: usize) -> Result<bool, err::ContentErr>{
+    pub fn check_content_exist(id: usize) -> Result<bool, err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM history WHERE IdContent = ?;")?;
         db.bind::<&[(_, &str)]>(&[
             (1, id.to_string().as_str()),
         ][..])?;
         db.next()?;
-        match db.read::<String, _>(0).unwrap_or("0".to_string()).parse::<usize>().unwrap_or(0) {
-            0 => return Ok(false),
-            _ => return Ok(true),
-        }
+        return match db.read::<String, _>(0).unwrap_or("0".to_string()).parse::<usize>().unwrap_or(0) {
+            0 => Ok(false),
+            _ => Ok(true),
+        };
     }
 
-    pub fn check_video_path(id: usize) -> Result<String, err::ContentErr>{
+    pub fn check_video_path(id: usize) -> Result<String, err::ContentErr> {
         match File::return_path(id) {
             Ok(s) => Ok(s),
             Err(_) => Err(err::ContentErr::DbErr(sqlite::Error { code: Some(12), message: Some("rep".to_string()) })),
@@ -751,18 +777,30 @@ impl Content {
 }
 
 impl Codepromo {
-    pub fn add(&self)-> Result<(), err::CodepromoErr>{
+    pub fn add(&self) -> Result<(), err::CodepromoErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO codepromo ('IdSubscribe', 'Description') VALUES (?, ?);")?;
+        let mut db = connection.prepare("INSERT INTO codepromo ('IdSubscribe', 'Description', 'Days') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_subscribe.to_string().as_str()),
             (2, self.description.as_str()),
+            (3, self.days.to_string().as_str())
         ][..])?;
         db.next()?;
         Ok(())
     }
 
-    pub fn check_for_description(description: &str) -> Result<(usize, usize), err::CodepromoErr>{
+    pub fn delete(id: &str) -> Result<(), err::CodepromoErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("DELETE FROM codepromo WHERE Description = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+        Ok(())
+
+    }
+
+    pub fn check_for_description(description: &str) -> Result<(usize, usize), err::CodepromoErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("SELECT * FROM codepromo WHERE Description = ?;")?;
         db.bind::<&[(_, &str)]>(&[

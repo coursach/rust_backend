@@ -1,33 +1,338 @@
-/*
-use rocket::http::Status; 
+use rocket::{data::ToByteUnit, http::Status, Data};
+
+
+use rocket::serde::json::Json;
+use crate::models::{Users, Subscribe, Content, Codepromo};
+use crate::transmitted_models::{AddingUsers, TransmittedSubscribe, TransmittedContents, TransmittedPromocode};
 use crate::function::*;
-use crate::models::{Users, Subscribe};
-use crate::transmitted_models::{AddingUsers, TransmittedSubscribe, UpdatingUsers};
-
 // All admin function for manipulating users
+pub struct Token {
+    info: String,
+}
 
-#[post("/user", data="<user_data>", format ="json")]
-pub fn add_user(user_data: String) -> Status{
-    match serde_json::from_str::<AddingUsers>(&user_data) {
-        Ok(t_u) => {
-            match check_is_admin_with_token(t_u.token) {
-                Ok(u) => {
-                    match u {
-                        true => {
-                            let user = Users{ name: t_u.name, surname: t_u.surname, password: t_u.password, email: t_u.email, image: "".to_string(), role: t_u.role };
-                            match user.add(){
-                                Ok(_) => Status::Created,
-                                Err(_) => Status::Conflict,
-                            }    
-                            },
-                        false => Status::Unauthorized,   
+#[derive(Debug)]
+pub enum ApiTokenError {
+    Missing,
+    Invalid,
+}
+
+use rocket::request::{Outcome, Request, FromRequest};
+use crate::models::err::{CodepromoErr, ContentErr, UserErr};
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for Token {
+    type Error = ApiTokenError;
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        match request.headers().get_one("token") {
+            None => Outcome::Error((Status::BadRequest, ApiTokenError::Missing)),
+            Some(k) => {
+                if let Ok(c) = check_is_admin_with_token(k.to_string()) {
+                    if c {
+                        Outcome::Success(Token { info: k.to_string() })
+                    } else {
+                        Outcome::Error((Status::Unauthorized, ApiTokenError::Invalid))
                     }
-                },
-                Err(_) => todo!(),
+                } else {
+                    Outcome::Error((Status::BadRequest, ApiTokenError::Missing))
+                }
             }
-        },
-        Err(_) => Status::BadRequest,   
-    } 
+        }
+    }
+}
+
+#[post("/user", data = "<user_data>", format = "json")]
+pub fn add_user(user_data: Json<AddingUsers>, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let user = Users { name: user_data.name.clone(), surname: user_data.surname.clone(), password: user_data.password.clone(), email: user_data.email.clone(), image: "data/image/default.png".to_string(), role: user_data.role };
+                    match user.add() {
+                        Ok(_) => Status::Created,
+                        Err(_) => Status::Conflict,
+                    }
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => todo!(),
+    }
+}
+
+
+#[post("/subscribe", data = "<data_subscribe>", format = "json")]
+pub fn add_subscribe(data_subscribe: Json<TransmittedSubscribe>, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let subscribe = Subscribe {
+                        name: data_subscribe.name.clone(),
+                        count_month: data_subscribe.count_month,
+                        title: data_subscribe.title.clone(),
+                        description: data_subscribe.description.clone(),
+                        discount: data_subscribe.discount,
+                        level: data_subscribe.level,
+                        price: data_subscribe.price,
+                    };
+                    match subscribe.add() {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError,
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/content", data = "<data_movie>", format = "json")]
+pub fn add_movie(data_movie: Json<TransmittedContents>, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let content = Content {
+                        id: 0,
+                        name: data_movie.name.clone(),
+                        description: data_movie.description.clone(),
+                        description_details: data_movie.description_details.clone(),
+                        image_path: data_movie.image_path.clone(),
+                        level: data_movie.level_subscribe,
+                        id_mood: 1,
+                    };
+                    match content.add() {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError,
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/image/<name>", format = "image/jpeg", data = "<data>")]
+pub async fn add_image_jpeg(data: Data<'_>, token: Token, name: &str) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let mut buffer = vec![];
+                    match data.open(1024.megabytes()).stream_to(&mut buffer).await {
+                        Ok(_) => {
+                            let path = format!("data/image/{}.jpeg", name).to_string();
+                            match std::fs::write(path.clone(), buffer) {
+                                Ok(_) => {
+                                    Status::Ok
+                                }
+                                Err(_) => Status::Unauthorized,
+                            }
+                        }
+                        Err(_) => Status::ExpectationFailed,
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/image/<name>", format = "image/png", data = "<data>")]
+pub async fn add_image_png(data: Data<'_>, token: Token, name: &str) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let mut buffer = vec![];
+                    match data.open(1024.megabytes()).stream_to(&mut buffer).await {
+                        Ok(_) => {
+                            let path = format!("data/image/{}.png", name).to_string();
+                            match std::fs::write(path.clone(), buffer) {
+                                Ok(_) => {
+                                    Status::Ok
+                                }
+                                Err(_) => Status::Unauthorized,
+                            }
+                        }
+                        Err(_) => Status::ExpectationFailed,
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/video/<name>", format = "video/mp4", data = "<data>")]
+pub async fn add_video(data: Data<'_>, token: Token, name: &str) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let mut buffer = vec![];
+                    match data.open(1024.megabytes()).stream_to(&mut buffer).await {
+                        Ok(_) => {
+                            let path = format!("data/video/{}.mp4", name).to_string();
+                            match std::fs::write(path.clone(), buffer) {
+                                Ok(_) => {
+                                    Status::Ok
+                                }
+                                Err(_) => Status::Unauthorized,
+                            }
+                        }
+                        Err(_) => Status::ExpectationFailed,
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/promo-code", data = "<data_promocode>", format = "json")]
+pub fn add_promocode(data_promocode: Json<TransmittedPromocode>, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let promo = Codepromo {
+                        description: data_promocode.description.clone(),
+                        id_subscribe: data_promocode.id_subscribe,
+                        days: data_promocode.days,
+                    };
+                    match promo.add() {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError,
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+
+//delete
+
+#[post("/user/<id>")]
+pub fn delete_user(id: usize, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match Users::delete(id) {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
+                    }
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => todo!(),
+    }
+}
+
+
+#[post("/subscribe/<id>")]
+pub fn delete_subscribe(id: usize, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match Subscribe::delete(id) {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
+                    }
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/content/<id>")]
+pub fn delete_movie(id:usize, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match Content::delete(id){
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
+                    }
+
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/image/<name>")]
+pub async fn delete_image(token: Token, name: &str) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match std::fs::remove_file(format!("data/image/{}", name)){
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::BadRequest
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/video/<name>")]
+pub async fn delete_video(token: Token, name: &str) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match std::fs::remove_file(format!("data/video/{}", name)){
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::BadRequest
+                    }
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+#[post("/promo-code/<description>")]
+pub fn delete_promocode(description: &str, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match Codepromo::delete(description){
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::BadRequest
+                    }
+
+                }
+                false => Status::Forbidden
+            }
+        }
+        Err(_) => Status::ServiceUnavailable,
+    }
+}
+
+/*
 }
 
 #[post("/user", data="<user_data>", format ="json")]
@@ -81,20 +386,20 @@ pub fn update_user(user_data: String) -> Status{
                                                 Err(_) => Status::InternalServerError,
                                             }
                                         },
-                                        Err(_) => Status::BadRequest,  
+                                        Err(_) => Status::BadRequest,
                                     }
                                 }
                                 _ => Status::UnprocessableEntity,
-                            }  
+                            }
                             },
-                        false => Status::Unauthorized,   
+                        false => Status::Unauthorized,
                     }
                 },
                 Err(_) => Status::Unauthorized,
             }
         },
-        Err(_) => Status::BadRequest,   
-    } 
+        Err(_) => Status::BadRequest,
+    }
 }
 
 
@@ -108,19 +413,19 @@ pub fn update_subscibe(data_subscribe: String) -> Status{
             Ok(u) => {
                 match u{
                     true => {
-                        let subscribe = Subscribe{ 
-                            name: t_d.name, 
-                            count_month: t_d.count_month, 
-                            title: t_d.title, 
-                            description: t_d.description, 
-                            discount: t_d.discount 
+                        let subscribe = Subscribe{
+                            name: t_d.name,
+                            count_month: t_d.count_month,
+                            title: t_d.title,
+                            description: t_d.description,
+                            discount: t_d.discount
                         };
                         match subscribe.add() {
                             Ok(_) => Status::Ok,
                             Err(_) => Status::InternalServerError,
                         }
                     },
-                    false => Status::Unauthorized,   
+                    false => Status::Unauthorized,
                 }
             },
             Err(_) => Status::ServiceUnavailable,
@@ -130,37 +435,7 @@ pub fn update_subscibe(data_subscribe: String) -> Status{
     }
 }
 
-#[post("/subscribe", data="<data_subscribe>", format ="json")]
-pub fn add_subscibe(data_subscribe: String) -> Status{
-    match serde_json::from_str::<TransmittedSubscribe>(&data_subscribe) {
-    Ok(t_d) => {
-        match check_is_admin_with_token(t_d.token) {
-            Ok(u) => {
-                match u {
-                    true => {
-                        let subscribe = Subscribe{ 
-                            name: t_d.name, 
-                            count_month: t_d.count_month, 
-                            title: t_d.title, 
-                            description: t_d.description, 
-                            discount: t_d.discount 
-                        };
-                        match subscribe.add() {
-                            Ok(_) => Status::Ok,
-                            Err(_) => Status::InternalServerError,
-                        }
-                    }, 
-                    false => {
-                        Status::Forbidden
-                    }
-                    }
-                },
-                Err(_) => Status::ServiceUnavailable,
-                } 
-            },
-    Err(_) => Status::BadRequest,
-    }
-}
-*/
 
+
+*/
 // All admin function for manipulating content

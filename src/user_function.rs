@@ -6,7 +6,7 @@ use rocket::{data::ToByteUnit, http::Status, Data};
 
 use crate::claims::Claims;
 use crate::models::{Users, Subscribe, SubscribeAndUser, Codepromo, Content, File, History, Workers};
-use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser, ReturnedContens, ReturnedAllInfoContent, Actor};
+use crate::transmitted_models::{UpdateProfileData, RegistrationUsers, GetUser, ReturnedContents, ReturnedAllInfoContent, Actor};
 use crate::{function::*, ReturnedSubscribe, WorkersForContent};
 
 
@@ -136,7 +136,7 @@ pub async fn update_image_profile_jpeg(data: Data<'_>, token: Token) -> Status{
                         user.image = path;
                         match user.update(token_data.0){
                             Ok(_) => {
-                                if user.image != old_image{
+                                if user.image != old_image && old_image != "data/image/default.png" {
                                     match std::fs::remove_file(old_image){
                                         Ok(_) => Status::Ok,
                                         Err(_) => {
@@ -364,18 +364,18 @@ pub async fn get_content_from_token(content_id: usize, token: Token) -> Result<N
 }
 
 #[get("/content?<name>")]
-pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContens>>, Status> {
+pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContents>>, Status> {
     println!("{}",name);
     match Content::return_contents_id(name.to_string()) {
         Ok(mut v) => {
-            let mut contents:Vec<ReturnedContens> = Vec::new();
+            let mut contents:Vec<ReturnedContents> = Vec::new();
             loop {
                 match v.pop(){
                     Some(id) => {
                         match Content::return_content_by_id(id) {
                             Ok(content) => {
                                 match content {
-                                    Some(c) => contents.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level }),
+                                    Some(c) => contents.push(ReturnedContents { id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level }),
                                     None => break ,                                                
                                 }
                             },
@@ -392,13 +392,13 @@ pub fn find_content(name: &str) -> Result<Json<Vec<ReturnedContens>>, Status> {
 }
 
 #[get("/content/movie")]
-pub fn all_content_movie() -> Result<Json<Vec<ReturnedContens>>, Status> { 
+pub fn all_content_movie() -> Result<Json<Vec<ReturnedContents>>, Status> {
     match Content::all() {
         Ok(mut vec) => {
             let mut result = Vec::new();
             loop{
                 match vec.pop(){
-                    Some(c) => if c.level == 2{ result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level })},
+                    Some(c) => if c.level == 2{ result.push(ReturnedContents { id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level })},
                     None => break,
                 }
             };
@@ -408,7 +408,7 @@ pub fn all_content_movie() -> Result<Json<Vec<ReturnedContens>>, Status> {
     }
 }
 #[get("/content/anime")]
-pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> { 
+pub fn all_content_anime() -> Result<Json<Vec<ReturnedContents>>, Status> {
     match Content::all() {
         Ok(mut vec) => {
             let mut result = Vec::new();
@@ -416,7 +416,7 @@ pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> {
                 match vec.pop(){
                     Some(c) =>{ 
                         if c.level == 1{
-                            result.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level })
+                            result.push(ReturnedContents { id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: format!("images/{}", c.image_path.to_string().split_off(11)), level_subscribe: c.level })
                         }
                     },
                     None => break,
@@ -429,15 +429,15 @@ pub fn all_content_anime() -> Result<Json<Vec<ReturnedContens>>, Status> {
 }
 
 #[get("/history")]
-pub fn get_history_by_token(token: Token)-> Result<Json<Vec<ReturnedContens>>, Status>{
+pub fn get_history_by_token(token: Token)-> Result<Json<Vec<ReturnedContents>>, Status>{
     match get_user_data_from_token(token.info){
         Ok(token_data) => {
             match History::get_history_by_user(token_data.0){
                 Ok(mut r) => {
-                    let mut contents:Vec<ReturnedContens> = Vec::new();
+                    let mut contents:Vec<ReturnedContents> = Vec::new();
                     loop{
                         match r.pop(){
-                        Some(c) => contents.push(ReturnedContens{ id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
+                        Some(c) => contents.push(ReturnedContents { id: c.id, name: c.name, description: c.description, description_details: c.description_details, image_path: c.image_path, level_subscribe: c.level }),
                             None => break, 
                         }
                     };

@@ -12,6 +12,7 @@ WORKDIR /app
 COPY . /app
 ENV RUSTFLAGS='-C linker=x86_64-linux-gnu-gcc'
 RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo install cargo-watch
 
 ENV ROCKET_ADDRESS=0.0.0.0
 ENV ROCKET_PORT=8000

@@ -1,4 +1,3 @@
-
 use chrono::{Duration, Utc};
 use jsonwebtoken::{
     decode, encode, errors::ErrorKind, DecodingKey, EncodingKey, Header, Validation,
@@ -65,10 +64,10 @@ impl Claims {
             &DecodingKey::from_secret(SECRET.as_ref()),
             &Validation::default(),
         )
-        .map_err(|e| match e.kind() {
-            ErrorKind::ExpiredSignature => AuthenticationError::Expired,
-            _ => AuthenticationError::Decoding(e.to_string()),
-        })?;
+            .map_err(|e| match e.kind() {
+                ErrorKind::ExpiredSignature => AuthenticationError::Expired,
+                _ => AuthenticationError::Decoding(e.to_string()),
+            })?;
 
         Ok(token.claims)
     }
@@ -89,7 +88,7 @@ impl Claims {
             &self,
             &EncodingKey::from_secret(SECRET.as_ref()),
         )
-        .map_err(|e| Custom(Status::BadRequest, e.to_string()))?;
+            .map_err(|e| Custom(Status::BadRequest, e.to_string()))?;
 
         Ok(token)
     }
