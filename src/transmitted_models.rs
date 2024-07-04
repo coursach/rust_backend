@@ -63,12 +63,34 @@ pub struct TransmittedSubscribe {
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
+pub struct TransmittedSubscribeWithId {
+    pub id: usize,
+    pub name: String,
+    pub count_month: usize,
+    pub title: String,
+    pub description: String,
+    pub discount: usize,
+    pub level: usize,
+    pub price: usize
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct TransmittedContents {
     pub name: String,
     pub description: String,
     pub description_details: String,
     pub image_path: String,
     pub level_subscribe: usize,
+}
+
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ReturnedCodepromo {
+    pub id: usize,
+    pub description: String,
+    pub idSubscribe: usize,
+    pub days: usize,
 }
 
 #[derive(Serialize)]
@@ -113,7 +135,7 @@ pub struct Actor {
     pub name: String,
     pub surname: String,
 }
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ReturnedSubscribe {
     pub id: usize,
     pub name: String,
@@ -126,6 +148,19 @@ pub struct ReturnedSubscribe {
 }
 
 #[derive(Serialize)]
+pub struct ReturnedFile {
+    pub id: usize,
+    pub idContent: usize,
+    pub path: String
+}
+
+#[derive(Deserialize)]
+pub struct TransmittedFile {
+    pub idContent: usize,
+    pub path: String
+}
+
+#[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
 pub struct GetUser {
     pub name: String,
@@ -134,4 +169,27 @@ pub struct GetUser {
     pub role: String,
     pub image_url: String,
     pub have_subscribe: bool,
+}
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct GetAdminUsers {
+    pub id: usize,
+    pub name: String,
+    pub surname: String,
+    pub password: String,
+    pub email: String,
+    pub image: String,
+    pub role: usize,
+}
+
+#[derive(Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct AddAdminUsers {
+    pub id: usize,
+    pub name: String,
+    pub surname: String,
+    pub password: String,
+    pub email: String,
+    pub image: String,
+    pub role: usize,
 }

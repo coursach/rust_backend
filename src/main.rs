@@ -103,8 +103,10 @@ fn rocket() -> _ {
         .mount("/find", routes![find_content])
         .mount("/registration", routes![registration_user])
         //.mount("/admin/update", routes![update_subscibe, update_user])
-        .mount("/admin/add", routes![add_user, add_subscribe, add_movie, add_image_png, add_image_jpeg, add_video, add_promocode])
-        .mount("/admin/delete", routes![delete_image, delete_movie, delete_promocode, delete_subscribe, delete_user, delete_video])
+        .mount("/admin/add", routes![add_user, add_subscribe, add_movie, add_image_png, add_image_jpeg, add_video, add_promocode, add_file])
+        .mount("/admin/delete", routes![delete_image, delete_movie, delete_promocode, delete_subscribe, delete_user, delete_video, delete_file])
+        .mount("/admin/get", routes![get_user, get_codepromo, get_images, get_videos, get_files])
+        .mount("/admin/update", routes![update_user, update_subscribe])
 }
 
 

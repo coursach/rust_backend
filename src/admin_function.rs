@@ -1,9 +1,7 @@
 use rocket::{data::ToByteUnit, http::Status, Data};
-
-
 use rocket::serde::json::Json;
-use crate::models::{Users, Subscribe, Content, Codepromo};
-use crate::transmitted_models::{AddingUsers, TransmittedSubscribe, TransmittedContents, TransmittedPromocode};
+use crate::models::{Users, Subscribe, Content, Codepromo, File};
+use crate::transmitted_models::{AddingUsers, TransmittedSubscribe, TransmittedContents, TransmittedPromocode, GetAdminUsers, AddAdminUsers, ReturnedSubscribes, TransmittedSubscribeWithId, ReturnedCodepromo, TransmittedFile, ReturnedFile};
 use crate::function::*;
 // All admin function for manipulating users
 pub struct Token {
@@ -17,6 +15,7 @@ pub enum ApiTokenError {
 }
 
 use rocket::request::{Outcome, Request, FromRequest};
+use crate::models;
 use crate::models::err::{CodepromoErr, ContentErr, UserErr};
 
 #[rocket::async_trait]
@@ -55,10 +54,28 @@ pub fn add_user(user_data: Json<AddingUsers>, token: Token) -> Status {
                 false => Status::Unauthorized,
             }
         }
-        Err(_) => todo!(),
+        Err(_) => Status::Unauthorized,
     }
 }
 
+#[post("/file", data = "<user_data>", format = "json")]
+pub fn add_file(user_data: Json<TransmittedFile>, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let file = File { path: user_data.path.clone(), id_content: user_data.idContent as i32};
+                    match file.add() {
+                        Ok(_) => Status::Created,
+                        Err(_) => Status::Conflict,
+                    }
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => Status::Unauthorized,
+    }
+}
 
 #[post("/subscribe", data = "<data_subscribe>", format = "json")]
 pub fn add_subscribe(data_subscribe: Json<TransmittedSubscribe>, token: Token) -> Status {
@@ -235,10 +252,27 @@ pub fn delete_user(id: usize, token: Token) -> Status {
                 false => Status::Unauthorized,
             }
         }
-        Err(_) => todo!(),
+        Err(_) => Status::Unauthorized,
     }
 }
 
+#[post("/file/<id>")]
+pub fn delete_file(id: usize, token: Token) -> Status {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match models::File::delete(id) {
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
+                    }
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => Status::Unauthorized,
+    }
+}
 
 #[post("/subscribe/<id>")]
 pub fn delete_subscribe(id: usize, token: Token) -> Status {
@@ -323,7 +357,6 @@ pub fn delete_promocode(description: &str, token: Token) -> Status {
                         Ok(_) => Status::Ok,
                         Err(_) => Status::BadRequest
                     }
-
                 }
                 false => Status::Forbidden
             }
@@ -332,6 +365,160 @@ pub fn delete_promocode(description: &str, token: Token) -> Status {
     }
 }
 
+
+
+
+//get
+
+#[post("/user")]
+pub fn get_user(token: Token) -> Result<Json<Vec<GetAdminUsers>>, Status> {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match Users::all() {
+                        Ok(l) => Ok(Json(l)),
+                        Err(_) => Err(Status::InternalServerError)
+                    }
+                }
+                false => Err(Status::Unauthorized),
+            }
+        }
+        Err(_) => Err(Status::Unauthorized),
+    }
+}
+
+#[post("/files")]
+pub fn get_files(token: Token) -> Result<Json<Vec<ReturnedFile>>, Status> {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match File::all() {
+                        Ok(l) => Ok(Json(l)),
+                        Err(_) => Err(Status::InternalServerError)
+                    }
+                }
+                false => Err(Status::Unauthorized),
+            }
+        }
+        Err(_) => Err(Status::Unauthorized),
+    }
+}
+
+#[post("/code-promo")]
+pub fn get_codepromo(token: Token) -> Result<Json<Vec<ReturnedCodepromo>>, Status> {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    match Codepromo::all() {
+                        Ok(l) => Ok(Json(l)),
+                        Err(_) => Err(Status::InternalServerError)
+                    }
+                }
+                false => Err(Status::Unauthorized),
+            }
+        }
+        Err(_) => Err(Status::Unauthorized),
+    }
+}
+
+#[post("/images")]
+pub fn get_images(token: Token) -> Result<Json<Vec<String>>, Status> {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let paths = std::fs::read_dir("./data/image").unwrap();
+                    let mut result: Vec<String>= Vec::new();
+                    for path in paths{
+                        result.push(path.unwrap().file_name().into_string().unwrap())
+                    }
+                    Ok(Json(result))
+                }
+                false => Err(Status::Unauthorized),
+            }
+        }
+        Err(_) => Err(Status::Unauthorized),
+    }
+}
+
+#[post("/videos")]
+pub fn get_videos(token: Token) -> Result<Json<Vec<String>>, Status> {
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let paths = std::fs::read_dir("./data/video").unwrap();
+                    let mut result: Vec<String>= Vec::new();
+                    for path in paths{
+                        result.push(path.unwrap().file_name().into_string().unwrap())
+                    }
+                    Ok(Json(result))
+                }
+                false => Err(Status::Unauthorized),
+            }
+        }
+        Err(_) => Err(Status::Unauthorized),
+    }
+}
+
+//update
+#[post("/user", data="<user_data>", format ="json")]
+pub fn update_user(user_data: Json<AddAdminUsers>, token: Token) -> Status{
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let user = Users{
+                        name: user_data.name.clone(),
+                        surname: user_data.surname.clone(),
+                        password: user_data.password.clone(),
+                        email: user_data.email.clone(),
+                        image: user_data.image.clone(),
+                        role: user_data.role as i32,
+                    };
+                    match user.update_to_admin(user_data.id){
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
+                    }
+
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => Status::Unauthorized,
+    }
+}
+
+#[post("/subscribe", data="<user_data>", format ="json")]
+pub fn update_subscribe(user_data: Json<TransmittedSubscribeWithId>, token: Token) -> Status{
+    match check_is_admin_with_token(token.info) {
+        Ok(u) => {
+            match u {
+                true => {
+                    let subscribe = Subscribe{
+                        name: user_data.name.clone(),
+                        price: user_data.price.clone(),
+                        level: user_data.level.clone(),
+                        description: user_data.description.clone(),
+                        title: user_data.title.clone(),
+                        count_month: user_data.count_month,
+                        discount: user_data.discount
+                    };
+                    match subscribe.update(user_data.id){
+                        Ok(_) => Status::Ok,
+                        Err(_) => Status::InternalServerError
+                    }
+
+                }
+                false => Status::Unauthorized,
+            }
+        }
+        Err(_) => Status::Unauthorized,
+    }
+}
 /*
 }
 

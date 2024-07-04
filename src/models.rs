@@ -3,7 +3,7 @@ use std::usize;
 use serde::{Deserialize, Serialize};
 use sqlite::State;
 
-use crate::{ReturnedSubscribes, ReturnedSubscribe};
+use crate::{ReturnedSubscribes, ReturnedSubscribe, GetAdminUsers, ReturnedCodepromo, ReturnedFile};
 
 pub mod err {
     use sqlite::Error as sqERR;
@@ -249,6 +249,24 @@ impl Users {
             image: db.read(6)?,
         })
     }
+    pub fn all() -> Result<Vec<GetAdminUsers>, err::UserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res: Vec<GetAdminUsers> = Vec::new();
+        let mut db = connection.prepare("SELECT * FROM users;")?;
+        while let State::Row = db.next()? {
+            let ret = GetAdminUsers {
+                id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
+                name: db.read(1)?,
+                surname: db.read(2)?,
+                password: db.read(3)?,
+                email: db.read(4)?,
+                role: db.read::<String, _>(5).unwrap().parse::<usize>().unwrap(),
+                image: db.read(6)?,
+            };
+            res.push(ret);
+        }
+        Ok(res)
+    }
 
     fn check_user_exsist(email: &str) -> Result<bool, err::UserErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
@@ -263,6 +281,24 @@ impl Users {
         } else {
             Ok(false)
         }
+    }
+
+    pub fn update_to_admin(&self, id: usize) -> Result<(), err::UserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("UPDATE users SET Name = ?, Surname = ?, Password = ?, Email = ?, Role = ?, ImageProfileFile = ? WHERE Id = ?;")?;
+        //let mut db = connection.prepare("UPDATE users SET Name = ? WHERE Id = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, self.name.as_str()),
+            (2, self.surname.to_string().as_str()),
+            (3, self.password.to_string().as_str()),
+            (4, self.email.to_string().as_str()),
+            (5, self.role.to_string().as_str()),
+            (6, self.image.to_string().as_str()),
+            (7, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+
+        Ok({})
     }
 
     pub fn update(&self, id: usize) -> Result<(), err::UserErr> {
@@ -333,7 +369,7 @@ impl Users {
 impl Workers {
     pub fn add(&self) -> Result<(), err::WorkersErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
-        let mut db = connection.prepare("INSERT INTO workers ('Name', 'Surname', 'IdContent', 'Role') VALUES (?, ?, ?);")?;
+        let mut db = connection.prepare("INSERT INTO workers ('Name', 'Surname', 'Role') VALUES (?, ?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.name.as_str()),
             (2, self.surname.as_str()),
@@ -443,6 +479,24 @@ impl Subscribe {
         ][..])?;
         db.next()?;
         Ok(())
+    }
+
+    pub fn update(&self, id: usize) -> Result<(), err::UserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("UPDATE subscribe SET Name = ?, Count_month = ?, Title = ?, Description = ?, Level = ?, Price = ? WHERE Id = ?;")?;
+        //let mut db = connection.prepare("UPDATE users SET Name = ? WHERE Id = ?;")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, self.name.as_str()),
+            (2, self.count_month.to_string().as_str()),
+            (3, self.title.to_string().as_str()),
+            (4, self.description.to_string().as_str()),
+            (5, self.level.to_string().as_str()),
+            (6, self.price.to_string().as_str()),
+            (7, id.to_string().as_str()),
+        ][..])?;
+        db.next()?;
+
+        Ok({})
     }
 
     pub fn all() -> Result<Vec<ReturnedSubscribes>, err::SubscribeErr> {
@@ -624,12 +678,36 @@ impl History {
 
 
 impl File {
+
     pub fn add(&self) -> Result<(), err::FileErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("INSERT INTO file ('IdContent', 'Path') VALUES (?, ?);")?;
         db.bind::<&[(_, &str)]>(&[
             (1, self.id_content.to_string().as_str()),
             (2, self.path.as_str()),
+        ][..])?;
+        db.next()?;
+        Ok(())
+    }
+    pub fn all() -> Result<Vec<ReturnedFile>, err::UserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res: Vec<ReturnedFile> = Vec::new();
+        let mut db = connection.prepare("SELECT * FROM file;")?;
+        while let State::Row = db.next()? {
+            let ret = ReturnedFile {
+                id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
+                idContent: db.read::<String, _>(1).unwrap().parse::<usize>().unwrap(),
+                path: db.read(2)?,
+            };
+            res.push(ret);
+        }
+        Ok(res)
+    }
+    pub fn delete(id: usize) -> Result<(), err::FileErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut db = connection.prepare("DELETE FROM file where Id = (?);")?;
+        db.bind::<&[(_, &str)]>(&[
+            (1, id.to_string().as_str()),
         ][..])?;
         db.next()?;
         Ok(())
@@ -676,7 +754,7 @@ impl Content {
         Ok(())
     }
 
-    pub fn delete(id:usize) -> Result<(), err::ContentErr>{
+    pub fn delete(id: usize) -> Result<(), err::ContentErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("DELETE FROM content WHERE Id = (?);")?;
         db.bind::<&[(_, &str)]>(&[
@@ -789,6 +867,22 @@ impl Codepromo {
         Ok(())
     }
 
+    pub fn all() -> Result<Vec<ReturnedCodepromo>, err::UserErr> {
+        let connection = sqlite::open("./data/cinemadb.db")?;
+        let mut res: Vec<ReturnedCodepromo> = Vec::new();
+        let mut db = connection.prepare("SELECT * FROM codepromo;")?;
+        while let State::Row = db.next()? {
+            let ret = ReturnedCodepromo {
+                id: db.read::<String, _>(0).unwrap().parse::<usize>().unwrap(),
+                description: db.read(1)?,
+                idSubscribe: db.read::<String, _>(2).unwrap().parse::<usize>().unwrap(),
+                days: db.read::<String, _>(3).unwrap().parse::<usize>().unwrap(),
+            };
+            res.push(ret);
+        }
+        Ok(res)
+    }
+
     pub fn delete(id: &str) -> Result<(), err::CodepromoErr> {
         let connection = sqlite::open("./data/cinemadb.db")?;
         let mut db = connection.prepare("DELETE FROM codepromo WHERE Description = ?;")?;
@@ -797,7 +891,6 @@ impl Codepromo {
         ][..])?;
         db.next()?;
         Ok(())
-
     }
 
     pub fn check_for_description(description: &str) -> Result<(usize, usize), err::CodepromoErr> {
